@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import BottomNav from '@/components/BottomNav';
 import MiniPlayer from '@/components/MiniPlayer';
 import FullscreenPlayer from '@/components/FullscreenPlayer';
+import { SheetTransition } from '@/components/PageTransition';
 import { iosSpring, iosBounce } from '@/lib/animations';
 
 const Profile = () => {
@@ -46,12 +47,13 @@ const Profile = () => {
   ];
 
   return (
-    <motion.div 
-      className="min-h-screen bg-black pb-44"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <SheetTransition>
+      <motion.div 
+        className="min-h-screen bg-black pb-44"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
       {/* iOS-style header */}
       <motion.header
         className="sticky top-0 z-30 px-5 pt-4 pb-3 safe-area-pt"
@@ -231,7 +233,8 @@ const Profile = () => {
       <BottomNav />
       <MiniPlayer />
       <FullscreenPlayer />
-    </motion.div>
+      </motion.div>
+    </SheetTransition>
   );
 };
 

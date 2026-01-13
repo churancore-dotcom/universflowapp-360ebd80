@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import BottomNav from '@/components/BottomNav';
 import MiniPlayer from '@/components/MiniPlayer';
 import FullscreenPlayer from '@/components/FullscreenPlayer';
+import PageTransition from '@/components/PageTransition';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { iosSpring, iosBounce } from '@/lib/animations';
@@ -81,12 +82,13 @@ const Settings = () => {
   );
 
   return (
-    <motion.div 
-      className="min-h-screen bg-black pb-44"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <PageTransition>
+      <motion.div 
+        className="min-h-screen bg-black pb-44"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
       {/* iOS-style header with back button */}
       <motion.header
         className="sticky top-0 z-30 px-2 pt-4 pb-3 flex items-center safe-area-pt"
@@ -239,7 +241,8 @@ const Settings = () => {
       <BottomNav />
       <MiniPlayer />
       <FullscreenPlayer />
-    </motion.div>
+      </motion.div>
+    </PageTransition>
   );
 };
 

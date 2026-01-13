@@ -7,6 +7,7 @@ import { usePlayer, Song } from '@/contexts/PlayerContext';
 import BottomNav from '@/components/BottomNav';
 import MiniPlayer from '@/components/MiniPlayer';
 import FullscreenPlayer from '@/components/FullscreenPlayer';
+import { TabTransition } from '@/components/PageTransition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { iosSpring, iosBounce } from '@/lib/animations';
 
@@ -154,12 +155,13 @@ const Library = () => {
   );
 
   return (
-    <motion.div 
-      className="min-h-screen bg-black pb-44"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <TabTransition>
+      <motion.div 
+        className="min-h-screen bg-black pb-44"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
       {/* iOS-style header */}
       <motion.header
         className="sticky top-0 z-30 px-5 pt-4 pb-3 safe-area-pt"
@@ -322,7 +324,8 @@ const Library = () => {
       <BottomNav />
       <MiniPlayer />
       <FullscreenPlayer />
-    </motion.div>
+      </motion.div>
+    </TabTransition>
   );
 };
 

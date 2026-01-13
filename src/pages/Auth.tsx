@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Music, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { FadeTransition } from '@/components/PageTransition';
 import { iosSpring, iosBounce } from '@/lib/animations';
 
 const Auth = () => {
@@ -48,7 +49,8 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <FadeTransition>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Ultra-realistic ambient background with depth */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -300,7 +302,8 @@ const Auth = () => {
           </motion.p>
         </motion.form>
       </motion.div>
-    </div>
+      </div>
+    </FadeTransition>
   );
 };
 

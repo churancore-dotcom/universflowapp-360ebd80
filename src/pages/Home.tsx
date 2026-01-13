@@ -9,6 +9,7 @@ import BottomNav from '@/components/BottomNav';
 import MiniPlayer from '@/components/MiniPlayer';
 import FullscreenPlayer from '@/components/FullscreenPlayer';
 import LockScreenPlayer from '@/components/LockScreenPlayer';
+import { TabTransition } from '@/components/PageTransition';
 import { Sparkles, Music, Lock } from 'lucide-react';
 import { iosSpring, staggerContainer } from '@/lib/animations';
 
@@ -96,12 +97,13 @@ const Home = () => {
   );
 
   return (
-    <motion.div 
-      className="min-h-screen bg-black pb-44"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={iosSpring}
-    >
+    <TabTransition>
+      <motion.div 
+        className="min-h-screen bg-black pb-44"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={iosSpring}
+      >
       {/* iOS-style header with blur */}
       <motion.header
         className="sticky top-0 z-30 px-6 py-4 safe-area-pt"
@@ -205,7 +207,8 @@ const Home = () => {
       <MiniPlayer />
       <FullscreenPlayer />
       <LockScreenPlayer isOpen={showLockScreen} onClose={() => setShowLockScreen(false)} />
-    </motion.div>
+      </motion.div>
+    </TabTransition>
   );
 };
 
