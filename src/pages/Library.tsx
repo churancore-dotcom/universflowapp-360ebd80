@@ -8,6 +8,7 @@ import { useDownloads } from '@/contexts/DownloadContext';
 import BottomNav from '@/components/BottomNav';
 import MiniPlayer from '@/components/MiniPlayer';
 import FullscreenPlayer from '@/components/FullscreenPlayer';
+import CreatePlaylistModal from '@/components/CreatePlaylistModal';
 import { TabTransition } from '@/components/PageTransition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { iosSpring, iosBounce } from '@/lib/animations';
@@ -29,6 +30,7 @@ const Library = () => {
   const [playlists, setPlaylists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('liked');
+  const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -411,6 +413,7 @@ const Library = () => {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     transition={iosBounce}
+                    onClick={() => setShowCreatePlaylist(true)}
                   >
                     <Plus className="w-5 h-5" />
                     Create Playlist
