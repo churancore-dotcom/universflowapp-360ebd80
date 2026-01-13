@@ -3,25 +3,31 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Song, usePlayer } from '@/contexts/PlayerContext';
+import { useNewSongNotification } from '@/hooks/useNewSongNotification';
 import SongCard from '@/components/SongCard';
 import HorizontalSection from '@/components/HorizontalSection';
+import FavoritesWidget from '@/components/FavoritesWidget';
 import BottomNav from '@/components/BottomNav';
 import MiniPlayer from '@/components/MiniPlayer';
 import FullscreenPlayer from '@/components/FullscreenPlayer';
 import LockScreenPlayer from '@/components/LockScreenPlayer';
 import { TabTransition } from '@/components/PageTransition';
-import { Sparkles, Music, Lock } from 'lucide-react';
+import { Sparkles, Music, Lock, Bell } from 'lucide-react';
 import { iosSpring, staggerContainer } from '@/lib/animations';
+import { toast } from 'sonner';
 
 const Home = () => {
   const { user } = useAuth();
   const { currentSong } = usePlayer();
+  const { requestPermission } = useNewSongNotification();
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLockScreen, setShowLockScreen] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   useEffect(() => {
     fetchSongs();
+    checkNotificationPermission();
 
     const channel = supabase
       .channel('songs-realtime')
@@ -30,6 +36,22 @@ const Home = () => {
 
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  const checkNotificationPermission = () => {
+    if ('Notification' in window) {
+      setNotificationsEnabled(Notification.permission === 'granted');
+    }
+  };
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestPermission();
+    setNotificationsEnabled(granted);
+    if (granted) {
+      toast.success('Notifications enabled! 🔔');
+    } else {
+      toast.error('Notifications were denied');
+    }
+  };
 
   const fetchSongs = async () => {
     const { data } = await supabase
@@ -127,6 +149,19 @@ const Home = () => {
             <h1 className="text-[22px] font-bold tracking-tight">{user?.email?.split('@')[0] || 'Music Lover'}</h1>
           </motion.div>
           <div className="flex items-center gap-2">
+            {!notificationsEnabled && (
+              <motion.button
+                onClick={handleEnableNotifications}
+                className="w-10 h-10 rounded-full flex items-center justify-center glass"
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                transition={iosSpring}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                <Bell className="w-5 h-5 text-white/80" />
+              </motion.button>
+            )}
             {currentSong && (
               <motion.button
                 onClick={() => setShowLockScreen(true)}
@@ -178,6 +213,9 @@ const Home = () => {
             initial="initial"
             animate="animate"
           >
+            {/* Favorites Widget */}
+            <FavoritesWidget />
+
             <HorizontalSection title="New Releases" subtitle="Fresh tracks just added">
               {songs.slice(0, 10).map((song, i) => (
                 <SongCard key={song.id} song={song} index={i} />
