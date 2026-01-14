@@ -1,7 +1,5 @@
 import React, { memo, ReactNode } from 'react';
-import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
-import { staggerContainer } from '@/lib/animations';
 
 interface HorizontalSectionProps {
   title: string;
@@ -12,21 +10,22 @@ interface HorizontalSectionProps {
 
 const HorizontalSection = memo(({ title, subtitle, children, onSeeAll }: HorizontalSectionProps) => {
   return (
-    <section className="mb-10">
-      <div className="flex items-center justify-between mb-5 px-1">
+    <section className="mb-8">
+      {/* Header - iOS 18 style */}
+      <div className="flex items-center justify-between mb-4 px-1">
         <div>
-          <h2 className="text-[22px] md:text-2xl font-semibold tracking-tight">
+          <h2 className="text-[20px] md:text-[22px] font-bold tracking-tight text-foreground">
             {title}
           </h2>
           {subtitle && (
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-[13px] text-muted-foreground/70 mt-0.5 font-medium">
               {subtitle}
             </p>
           )}
         </div>
         {onSeeAll && (
           <button
-            className="flex items-center gap-1 text-sm text-primary font-medium active:scale-95 transition-transform"
+            className="flex items-center gap-0.5 text-[14px] text-primary font-semibold active:opacity-60 transition-opacity"
             onClick={onSeeAll}
           >
             See All
@@ -35,14 +34,16 @@ const HorizontalSection = memo(({ title, subtitle, children, onSeeAll }: Horizon
         )}
       </div>
       
-      <motion.div 
-        className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory -mx-6 px-6"
-        variants={staggerContainer}
-        initial="initial"
-        animate="animate"
+      {/* Horizontal Scroll - optimized for performance */}
+      <div 
+        className="flex gap-3 overflow-x-auto pb-3 hide-scrollbar snap-x snap-mandatory -mx-5 px-5 scroll-smooth"
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+        }}
       >
         {children}
-      </motion.div>
+      </div>
     </section>
   );
 });

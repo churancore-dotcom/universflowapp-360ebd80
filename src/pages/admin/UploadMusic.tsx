@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Music, Image, X, Check, Loader2, AlertCircle, FileAudio, Link, Globe } from 'lucide-react';
+import { Upload, Music, Image, X, Check, Loader2, AlertCircle, Link, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +12,8 @@ import { toast } from 'sonner';
 const genres = ['Pop', 'Rock', 'Hip Hop', 'R&B', 'Electronic', 'Jazz', 'Classical', 'Country', 'Indie', 'Metal', 'Phonk', 'Lo-Fi', 'Bollywood', 'Punjabi', 'Haryanvi'];
 const moods = ['Happy', 'Sad', 'Energetic', 'Calm', 'Romantic', 'Dark', 'Uplifting', 'Chill', 'Slow Reverb', 'Bass Boosted'];
 
-// File validation constants
-const MAX_AUDIO_SIZE = 100 * 1024 * 1024; // 100MB
-const MAX_COVER_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_AUDIO_SIZE = 100 * 1024 * 1024;
+const MAX_COVER_SIZE = 10 * 1024 * 1024;
 const ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/flac', 'audio/aac', 'audio/ogg', 'audio/mp4', 'audio/x-m4a'];
 const ALLOWED_COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
@@ -35,7 +34,6 @@ const UploadMusic = () => {
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [audioDuration, setAudioDuration] = useState<number>(0);
   
-  // URL import state
   const [audioUrl, setAudioUrl] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
   const [isValidatingUrl, setIsValidatingUrl] = useState(false);
@@ -79,9 +77,7 @@ const UploadMusic = () => {
   const getAudioDuration = (file: File): Promise<number> => {
     return new Promise((resolve) => {
       const audio = new Audio();
-      audio.onloadedmetadata = () => {
-        resolve(Math.round(audio.duration));
-      };
+      audio.onloadedmetadata = () => resolve(Math.round(audio.duration));
       audio.onerror = () => resolve(0);
       audio.src = URL.createObjectURL(file);
     });
@@ -90,9 +86,7 @@ const UploadMusic = () => {
   const getAudioDurationFromUrl = (url: string): Promise<number> => {
     return new Promise((resolve) => {
       const audio = new Audio();
-      audio.onloadedmetadata = () => {
-        resolve(Math.round(audio.duration));
-      };
+      audio.onloadedmetadata = () => resolve(Math.round(audio.duration));
       audio.onerror = () => resolve(0);
       audio.crossOrigin = 'anonymous';
       audio.src = url;
@@ -105,7 +99,6 @@ const UploadMusic = () => {
       return;
     }
 
-    // Basic URL validation
     try {
       new URL(audioUrl);
     } catch {
@@ -118,33 +111,18 @@ const UploadMusic = () => {
     setValidationErrors(prev => prev.filter(e => e.type !== 'url'));
 
     try {
-      // Try to fetch headers to check if it's a valid audio file
-      const response = await fetch(audioUrl, { method: 'HEAD', mode: 'cors' }).catch(() => null);
-      
-      if (response) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && !contentType.includes('audio') && !contentType.includes('octet-stream')) {
-          // Not definitely audio, but still try to load it
-          console.warn('Content type may not be audio:', contentType);
-        }
-      }
-
-      // Try to get duration
       const duration = await getAudioDurationFromUrl(audioUrl);
       if (duration > 0) {
         setAudioDuration(duration);
         setUrlValidated(true);
-        toast.success('Audio URL validated successfully!');
+        toast.success('Audio URL validated!');
       } else {
-        // URL might still work, just can't get duration
         setUrlValidated(true);
-        toast.success('URL accepted - duration will be detected on playback');
+        toast.success('URL accepted');
       }
     } catch (error) {
-      console.error('URL validation error:', error);
-      // Still allow the URL - it might work when played
       setUrlValidated(true);
-      toast.info('URL accepted - please verify it plays correctly');
+      toast.info('URL accepted - verify it plays correctly');
     } finally {
       setIsValidatingUrl(false);
     }
@@ -251,7 +229,6 @@ const UploadMusic = () => {
       let fileSize = 0;
 
       if (uploadMode === 'file' && audioFile) {
-        // Upload audio file
         const audioExt = audioFile.name.split('.').pop();
         const audioPath = `${Date.now()}-${Math.random().toString(36).substring(7)}.${audioExt}`;
         
@@ -269,7 +246,6 @@ const UploadMusic = () => {
 
       setUploadProgress(50);
 
-      // Handle cover
       let finalCoverUrl = coverUrl || null;
       let coverSize = 0;
 
@@ -290,7 +266,6 @@ const UploadMusic = () => {
 
       setUploadProgress(75);
 
-      // Insert song record
       const { error: dbError } = await supabase.from('songs').insert({
         title: metadata.title,
         artist: metadata.artist,
@@ -311,7 +286,6 @@ const UploadMusic = () => {
       setUploadProgress(100);
       toast.success('Song added successfully!');
 
-      // Reset form
       setTimeout(() => {
         setAudioFile(null);
         setCoverFile(null);
@@ -343,301 +317,209 @@ const UploadMusic = () => {
     : (audioUrl && metadata.title && metadata.artist);
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
-      >
-        <h1 className="text-2xl md:text-3xl font-display font-bold">Upload Music</h1>
-        <p className="text-muted-foreground mt-1 text-sm md:text-base">Add new tracks to your music library</p>
-      </motion.div>
+    <div className="p-4 md:p-6 max-w-4xl mx-auto pb-24">
+      {/* iOS 18 Style Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Upload Music</h1>
+        <p className="text-muted-foreground/70 text-sm mt-1">Add new tracks to your library</p>
+      </div>
 
-      {/* Upload Mode Tabs */}
+      {/* iOS 18 Segmented Control */}
       <Tabs value={uploadMode} onValueChange={(v) => setUploadMode(v as 'file' | 'url')} className="mb-6">
-        <TabsList className="grid w-full grid-cols-2 bg-muted/50">
-          <TabsTrigger value="file" className="flex items-center gap-2">
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">File Upload</span>
-            <span className="sm:hidden">File</span>
+        <TabsList className="grid w-full grid-cols-2 h-11 p-1 bg-muted/40 rounded-xl">
+          <TabsTrigger value="file" className="rounded-lg text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Upload className="w-4 h-4 mr-2" />
+            File
           </TabsTrigger>
-          <TabsTrigger value="url" className="flex items-center gap-2">
-            <Link className="w-4 h-4" />
-            <span className="hidden sm:inline">URL Import</span>
-            <span className="sm:hidden">URL</span>
+          <TabsTrigger value="url" className="rounded-lg text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Link className="w-4 h-4 mr-2" />
+            URL
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="file" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            {/* File Upload Section */}
-            <motion.div
-              className="space-y-6"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
+        <TabsContent value="file" className="mt-5 space-y-5">
+          {/* Audio Upload Card - iOS 18 Style */}
+          <div className="ios-card p-4">
+            <Label className="text-sm font-medium mb-3 block">Audio File *</Label>
+            <div
+              className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-colors ${
+                isDraggingAudio ? 'border-primary bg-primary/5' :
+                audioFile ? 'border-green-500/50 bg-green-500/5' :
+                'border-muted-foreground/20 hover:border-muted-foreground/40'
+              }`}
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingAudio(true); }}
+              onDragLeave={() => setIsDraggingAudio(false)}
+              onDrop={handleAudioDrop}
             >
-              {/* Audio Upload */}
-              <div>
-                <Label className="mb-2 block text-sm">Audio File *</Label>
-                <motion.div
-                  className={`relative border-2 border-dashed rounded-2xl p-6 md:p-8 text-center transition-all ${
-                    isDraggingAudio
-                      ? 'border-primary bg-primary/10'
-                      : audioFile
-                      ? 'border-green-500/50 bg-green-500/5'
-                      : validationErrors.some(e => e.type === 'audio')
-                      ? 'border-destructive/50 bg-destructive/5'
-                      : 'border-white/10 hover:border-white/20'
-                  }`}
-                  onDragOver={(e) => { e.preventDefault(); setIsDraggingAudio(true); }}
-                  onDragLeave={() => setIsDraggingAudio(false)}
-                  onDrop={handleAudioDrop}
-                  whileHover={{ scale: 1.01 }}
-                >
-                  <input
-                    type="file"
-                    accept="audio/*"
-                    onChange={handleAudioSelect}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-                  <AnimatePresence mode="wait">
-                    {audioFile ? (
-                      <motion.div
-                        key="file"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        className="flex items-center justify-center gap-3"
-                      >
-                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                          <Check className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
-                        </div>
-                        <div className="text-left min-w-0">
-                          <p className="font-medium truncate text-sm md:text-base">{audioFile.name}</p>
-                          <p className="text-xs md:text-sm text-muted-foreground">
-                            {formatFileSize(audioFile.size)} • {audioDuration > 0 ? formatDuration(audioDuration) : 'Loading...'}
-                          </p>
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setAudioFile(null); setAudioDuration(0); }}
-                          className="p-2 hover:bg-white/10 rounded-full flex-shrink-0"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="empty"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                      >
-                        <Music className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 text-muted-foreground" />
-                        <p className="font-medium text-sm md:text-base">Drop audio file here</p>
-                        <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                          MP3, WAV, FLAC, AAC, OGG, M4A
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              </div>
-
-              {/* Cover Upload */}
-              <div>
-                <Label className="mb-2 block text-sm">Cover Art</Label>
-                <motion.div
-                  className={`relative border-2 border-dashed rounded-2xl p-6 md:p-8 text-center transition-all ${
-                    isDraggingCover
-                      ? 'border-primary bg-primary/10'
-                      : coverFile
-                      ? 'border-accent/50 bg-accent/5'
-                      : validationErrors.some(e => e.type === 'cover')
-                      ? 'border-destructive/50 bg-destructive/5'
-                      : 'border-white/10 hover:border-white/20'
-                  }`}
-                  onDragOver={(e) => { e.preventDefault(); setIsDraggingCover(true); }}
-                  onDragLeave={() => setIsDraggingCover(false)}
-                  onDrop={handleCoverDrop}
-                  whileHover={{ scale: 1.01 }}
-                >
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverSelect}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-                  <AnimatePresence mode="wait">
-                    {coverPreview ? (
-                      <motion.div
-                        key="preview"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        className="relative inline-block"
-                      >
-                        <img
-                          src={coverPreview}
-                          alt="Cover preview"
-                          className="w-24 h-24 md:w-32 md:h-32 rounded-xl object-cover mx-auto"
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCoverFile(null);
-                            setCoverPreview(null);
-                          }}
-                          className="absolute -top-2 -right-2 p-1 bg-destructive rounded-full"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="empty"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                      >
-                        <Image className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 text-muted-foreground" />
-                        <p className="font-medium text-sm md:text-base">Drop cover image here</p>
-                        <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                          JPG, PNG, WebP
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              </div>
-            </motion.div>
-
-            {/* Metadata Section */}
-            <MetadataForm 
-              metadata={metadata}
-              setMetadata={setMetadata}
-              genres={genres}
-              moods={moods}
-              isUploading={isUploading}
-              uploadProgress={uploadProgress}
-              canSubmit={!!canSubmit}
-              onSubmit={handleUpload}
-            />
+              <input
+                type="file"
+                accept="audio/*"
+                onChange={handleAudioSelect}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+              {audioFile ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <Check className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div className="text-left min-w-0 flex-1">
+                    <p className="font-medium text-sm truncate">{audioFile.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatFileSize(audioFile.size)} • {audioDuration > 0 ? formatDuration(audioDuration) : 'Loading...'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setAudioFile(null); setAudioDuration(0); }}
+                    className="p-2 hover:bg-white/10 rounded-full"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <Music className="w-10 h-10 mx-auto mb-2 text-muted-foreground/50" />
+                  <p className="font-medium text-sm">Drop audio file here</p>
+                  <p className="text-xs text-muted-foreground mt-1">MP3, WAV, FLAC, AAC, OGG, M4A</p>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Cover Upload Card */}
+          <div className="ios-card p-4">
+            <Label className="text-sm font-medium mb-3 block">Cover Art</Label>
+            <div
+              className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-colors ${
+                isDraggingCover ? 'border-accent bg-accent/5' :
+                coverFile ? 'border-accent/50 bg-accent/5' :
+                'border-muted-foreground/20 hover:border-muted-foreground/40'
+              }`}
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingCover(true); }}
+              onDragLeave={() => setIsDraggingCover(false)}
+              onDrop={handleCoverDrop}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCoverSelect}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+              {coverPreview ? (
+                <div className="relative inline-block">
+                  <img src={coverPreview} alt="Cover" className="w-24 h-24 rounded-xl object-cover mx-auto" />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setCoverFile(null); setCoverPreview(null); }}
+                    className="absolute -top-2 -right-2 p-1 bg-destructive rounded-full"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <Image className="w-10 h-10 mx-auto mb-2 text-muted-foreground/50" />
+                  <p className="font-medium text-sm">Drop cover image here</p>
+                  <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Metadata Card */}
+          <MetadataCard 
+            metadata={metadata} 
+            setMetadata={setMetadata} 
+            genres={genres} 
+            moods={moods}
+            isUploading={isUploading}
+            uploadProgress={uploadProgress}
+            canSubmit={!!canSubmit}
+            onSubmit={handleUpload}
+          />
         </TabsContent>
 
-        <TabsContent value="url" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            {/* URL Import Section */}
-            <motion.div
-              className="space-y-6"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              {/* Audio URL */}
-              <div className="glass rounded-2xl p-4 md:p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Globe className="w-5 h-5 text-primary" />
-                  <Label className="text-base font-medium">Audio URL *</Label>
-                </div>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Enter a direct link to an MP3 file (e.g., from Google Drive, Dropbox, or your own server)
-                </p>
-                <div className="flex gap-2">
-                  <Input
-                    value={audioUrl}
-                    onChange={(e) => { setAudioUrl(e.target.value); setUrlValidated(false); }}
-                    placeholder="https://example.com/song.mp3"
-                    className="flex-1 bg-muted/50 border-white/10"
-                  />
-                  <Button
-                    onClick={validateAudioUrl}
-                    disabled={isValidatingUrl || !audioUrl}
-                    variant="outline"
-                    className="flex-shrink-0"
-                  >
-                    {isValidatingUrl ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : urlValidated ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : (
-                      'Verify'
-                    )}
-                  </Button>
-                </div>
-                {urlValidated && audioDuration > 0 && (
-                  <p className="text-xs text-green-500 mt-2">
-                    ✓ Audio verified • Duration: {formatDuration(audioDuration)}
-                  </p>
-                )}
-                {validationErrors.find(e => e.type === 'url') && (
-                  <p className="text-xs text-destructive mt-2 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {validationErrors.find(e => e.type === 'url')?.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Cover URL */}
-              <div className="glass rounded-2xl p-4 md:p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Image className="w-5 h-5 text-accent" />
-                  <Label className="text-base font-medium">Cover Image URL</Label>
-                </div>
-                <Input
-                  value={coverUrl}
-                  onChange={(e) => setCoverUrl(e.target.value)}
-                  placeholder="https://example.com/cover.jpg"
-                  className="bg-muted/50 border-white/10"
-                />
-                {coverUrl && (
-                  <div className="mt-4 flex justify-center">
-                    <img 
-                      src={coverUrl} 
-                      alt="Cover preview" 
-                      className="w-24 h-24 rounded-xl object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Tips */}
-              <div className="glass rounded-2xl p-4 md:p-6 bg-primary/5 border-primary/20">
-                <h3 className="font-medium text-sm mb-2">💡 Tips for URL Import</h3>
-                <ul className="text-xs text-muted-foreground space-y-1">
-                  <li>• Use direct links to audio files (ending in .mp3, .wav, etc.)</li>
-                  <li>• Google Drive: Use "Anyone with link" sharing</li>
-                  <li>• Dropbox: Change "dl=0" to "dl=1" in the URL</li>
-                  <li>• Make sure the URL is publicly accessible</li>
-                </ul>
-              </div>
-            </motion.div>
-
-            {/* Metadata Section */}
-            <MetadataForm 
-              metadata={metadata}
-              setMetadata={setMetadata}
-              genres={genres}
-              moods={moods}
-              isUploading={isUploading}
-              uploadProgress={uploadProgress}
-              canSubmit={!!canSubmit}
-              onSubmit={handleUpload}
-              isUrlMode
-            />
+        <TabsContent value="url" className="mt-5 space-y-5">
+          {/* URL Input Card */}
+          <div className="ios-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Globe className="w-4 h-4 text-primary" />
+              <Label className="text-sm font-medium">Audio URL *</Label>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={audioUrl}
+                onChange={(e) => { setAudioUrl(e.target.value); setUrlValidated(false); }}
+                placeholder="https://example.com/song.mp3"
+                className="flex-1 h-11 rounded-xl bg-muted/30 border-0"
+              />
+              <Button
+                onClick={validateAudioUrl}
+                disabled={isValidatingUrl || !audioUrl}
+                variant="outline"
+                className="h-11 px-4 rounded-xl"
+              >
+                {isValidatingUrl ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                 urlValidated ? <Check className="w-4 h-4 text-green-500" /> : 'Verify'}
+              </Button>
+            </div>
+            {urlValidated && audioDuration > 0 && (
+              <p className="text-xs text-green-500 mt-2">✓ Duration: {formatDuration(audioDuration)}</p>
+            )}
           </div>
+
+          {/* Cover URL Card */}
+          <div className="ios-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Image className="w-4 h-4 text-accent" />
+              <Label className="text-sm font-medium">Cover Image URL</Label>
+            </div>
+            <Input
+              value={coverUrl}
+              onChange={(e) => setCoverUrl(e.target.value)}
+              placeholder="https://example.com/cover.jpg"
+              className="h-11 rounded-xl bg-muted/30 border-0"
+            />
+            {coverUrl && (
+              <div className="mt-3 flex justify-center">
+                <img 
+                  src={coverUrl} 
+                  alt="Cover" 
+                  className="w-20 h-20 rounded-xl object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Tips */}
+          <div className="ios-card p-4 bg-primary/5 border-primary/10">
+            <h3 className="font-medium text-sm mb-2">💡 URL Import Tips</h3>
+            <ul className="text-xs text-muted-foreground space-y-1">
+              <li>• Use direct links ending in .mp3, .wav, etc.</li>
+              <li>• Google Drive: Enable "Anyone with link"</li>
+              <li>• Dropbox: Change "dl=0" to "dl=1"</li>
+            </ul>
+          </div>
+
+          {/* Metadata Card */}
+          <MetadataCard 
+            metadata={metadata} 
+            setMetadata={setMetadata} 
+            genres={genres} 
+            moods={moods}
+            isUploading={isUploading}
+            uploadProgress={uploadProgress}
+            canSubmit={!!canSubmit}
+            onSubmit={handleUpload}
+            isUrlMode
+          />
         </TabsContent>
       </Tabs>
     </div>
   );
 };
 
-// Separate component for metadata form to avoid duplication
-interface MetadataFormProps {
+// iOS 18 Style Metadata Card
+const MetadataCard = ({ metadata, setMetadata, genres, moods, isUploading, uploadProgress, canSubmit, onSubmit, isUrlMode }: {
   metadata: { title: string; artist: string; album: string; genre: string; mood: string; bpm: string };
   setMetadata: React.Dispatch<React.SetStateAction<{ title: string; artist: string; album: string; genre: string; mood: string; bpm: string }>>;
   genres: string[];
@@ -647,46 +529,36 @@ interface MetadataFormProps {
   canSubmit: boolean;
   onSubmit: () => void;
   isUrlMode?: boolean;
-}
-
-const MetadataForm = ({ metadata, setMetadata, genres, moods, isUploading, uploadProgress, canSubmit, onSubmit, isUrlMode }: MetadataFormProps) => (
-  <motion.div
-    className="glass rounded-2xl p-4 md:p-6 space-y-4"
-    initial={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ delay: 0.2 }}
-  >
-    <h2 className="text-lg font-display font-bold mb-4">Song Details</h2>
+}) => (
+  <div className="ios-card p-4 space-y-4">
+    <h3 className="font-semibold text-base">Song Details</h3>
     
     <div>
-      <Label htmlFor="title" className="text-sm">Title *</Label>
+      <Label className="text-sm">Title *</Label>
       <Input
-        id="title"
         value={metadata.title}
         onChange={(e) => setMetadata(prev => ({ ...prev, title: e.target.value }))}
-        className="mt-1.5 bg-muted/50 border-white/10"
+        className="mt-1.5 h-11 rounded-xl bg-muted/30 border-0"
         placeholder="Song title"
       />
     </div>
 
     <div>
-      <Label htmlFor="artist" className="text-sm">Artist *</Label>
+      <Label className="text-sm">Artist *</Label>
       <Input
-        id="artist"
         value={metadata.artist}
         onChange={(e) => setMetadata(prev => ({ ...prev, artist: e.target.value }))}
-        className="mt-1.5 bg-muted/50 border-white/10"
+        className="mt-1.5 h-11 rounded-xl bg-muted/30 border-0"
         placeholder="Artist name"
       />
     </div>
 
     <div>
-      <Label htmlFor="album" className="text-sm">Album</Label>
+      <Label className="text-sm">Album</Label>
       <Input
-        id="album"
         value={metadata.album}
         onChange={(e) => setMetadata(prev => ({ ...prev, album: e.target.value }))}
-        className="mt-1.5 bg-muted/50 border-white/10"
+        className="mt-1.5 h-11 rounded-xl bg-muted/30 border-0"
         placeholder="Album name"
       />
     </div>
@@ -694,71 +566,51 @@ const MetadataForm = ({ metadata, setMetadata, genres, moods, isUploading, uploa
     <div className="grid grid-cols-2 gap-3">
       <div>
         <Label className="text-sm">Genre</Label>
-        <Select
-          value={metadata.genre}
-          onValueChange={(value) => setMetadata(prev => ({ ...prev, genre: value }))}
-        >
-          <SelectTrigger className="mt-1.5 bg-muted/50 border-white/10">
+        <Select value={metadata.genre} onValueChange={(v) => setMetadata(prev => ({ ...prev, genre: v }))}>
+          <SelectTrigger className="mt-1.5 h-11 rounded-xl bg-muted/30 border-0">
             <SelectValue placeholder="Genre" />
           </SelectTrigger>
           <SelectContent>
-            {genres.map((genre) => (
-              <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-            ))}
+            {genres.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label className="text-sm">Mood</Label>
-        <Select
-          value={metadata.mood}
-          onValueChange={(value) => setMetadata(prev => ({ ...prev, mood: value }))}
-        >
-          <SelectTrigger className="mt-1.5 bg-muted/50 border-white/10">
+        <Select value={metadata.mood} onValueChange={(v) => setMetadata(prev => ({ ...prev, mood: v }))}>
+          <SelectTrigger className="mt-1.5 h-11 rounded-xl bg-muted/30 border-0">
             <SelectValue placeholder="Mood" />
           </SelectTrigger>
           <SelectContent>
-            {moods.map((mood) => (
-              <SelectItem key={mood} value={mood}>{mood}</SelectItem>
-            ))}
+            {moods.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
     </div>
 
     <div>
-      <Label htmlFor="bpm" className="text-sm">BPM</Label>
+      <Label className="text-sm">BPM</Label>
       <Input
-        id="bpm"
         type="number"
         value={metadata.bpm}
         onChange={(e) => setMetadata(prev => ({ ...prev, bpm: e.target.value }))}
-        className="mt-1.5 bg-muted/50 border-white/10"
+        className="mt-1.5 h-11 rounded-xl bg-muted/30 border-0"
         placeholder="120"
       />
     </div>
 
-    {/* Progress Bar */}
+    {/* Progress */}
     <AnimatePresence>
       {isUploading && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="pt-4"
-        >
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-primary to-accent"
               initial={{ width: 0 }}
               animate={{ width: `${uploadProgress}%` }}
-              transition={{ duration: 0.3 }}
             />
           </div>
-          <p className="text-sm text-muted-foreground text-center mt-2">
-            {isUrlMode ? 'Adding song...' : 'Uploading...'} {uploadProgress}%
-          </p>
+          <p className="text-xs text-muted-foreground text-center mt-2">{uploadProgress}%</p>
         </motion.div>
       )}
     </AnimatePresence>
@@ -766,18 +618,16 @@ const MetadataForm = ({ metadata, setMetadata, genres, moods, isUploading, uploa
     <Button
       onClick={onSubmit}
       disabled={isUploading || !canSubmit}
-      className="w-full h-12 btn-premium mt-4"
+      className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-primary to-accent text-white"
     >
-      {isUploading ? (
-        <Loader2 className="w-5 h-5 animate-spin" />
-      ) : (
+      {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
         <>
-          {isUrlMode ? <Link className="w-5 h-5 mr-2" /> : <Upload className="w-5 h-5 mr-2" />}
-          {isUrlMode ? 'Add Song from URL' : 'Upload Song'}
+          {isUrlMode ? <Link className="w-4 h-4 mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+          {isUrlMode ? 'Add from URL' : 'Upload Song'}
         </>
       )}
     </Button>
-  </motion.div>
+  </div>
 );
 
 export default UploadMusic;
