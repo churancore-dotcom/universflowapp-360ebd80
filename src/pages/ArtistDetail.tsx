@@ -1,0 +1,298 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Play, Shuffle, Music, User } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { usePlayer, Song } from '@/contexts/PlayerContext';
+import { useDownloads } from '@/contexts/DownloadContext';
+import BottomNav from '@/components/BottomNav';
+import MiniPlayer from '@/components/MiniPlayer';
+import FullscreenPlayer from '@/components/FullscreenPlayer';
+import LikeButton from '@/components/LikeButton';
+import DownloadButton from '@/components/DownloadButton';
+import { TabTransition } from '@/components/PageTransition';
+import { iosSpring, iosBounce } from '@/lib/animations';
+
+const ArtistDetail = () => {
+  const { artistName } = useParams<{ artistName: string }>();
+  const navigate = useNavigate();
+  const { playSong, setQueue, currentSong, isPlaying } = usePlayer();
+  const { getDownloadedUrl } = useDownloads();
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [artistCover, setArtistCover] = useState<string | null>(null);
+
+  const decodedArtistName = decodeURIComponent(artistName || '');
+
+  useEffect(() => {
+    fetchArtistSongs();
+  }, [artistName]);
+
+  const fetchArtistSongs = async () => {
+    if (!decodedArtistName) return;
+
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('songs')
+      .select('*')
+      .eq('is_visible', true)
+      .ilike('artist', decodedArtistName)
+      .order('created_at', { ascending: false });
+
+    if (data && !error) {
+      const mappedSongs: Song[] = data.map(s => ({
+        id: s.id,
+        title: s.title,
+        artist: s.artist,
+        album: s.album || undefined,
+        cover_url: s.cover_url || undefined,
+        audio_url: s.audio_url,
+        duration: s.duration || undefined,
+      }));
+      setSongs(mappedSongs);
+      
+      // Use first song's cover as artist cover
+      if (mappedSongs.length > 0 && mappedSongs[0].cover_url) {
+        setArtistCover(mappedSongs[0].cover_url);
+      }
+    }
+    setLoading(false);
+  };
+
+  const handlePlayAll = () => {
+    if (songs.length === 0) return;
+    setQueue(songs);
+    const offlineUrl = getDownloadedUrl(songs[0].id);
+    playSong(songs[0], offlineUrl);
+  };
+
+  const handleShufflePlay = () => {
+    if (songs.length === 0) return;
+    const shuffled = [...songs].sort(() => Math.random() - 0.5);
+    setQueue(shuffled);
+    const offlineUrl = getDownloadedUrl(shuffled[0].id);
+    playSong(shuffled[0], offlineUrl);
+  };
+
+  const handlePlaySong = (song: Song, index: number) => {
+    // Set queue starting from this song
+    const reorderedQueue = [...songs.slice(index), ...songs.slice(0, index)];
+    setQueue(reorderedQueue);
+    const offlineUrl = getDownloadedUrl(song.id);
+    playSong(song, offlineUrl);
+  };
+
+  const formatDuration = (seconds?: number) => {
+    if (!seconds) return '';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const totalDuration = songs.reduce((acc, s) => acc + (s.duration || 0), 0);
+  const totalMinutes = Math.floor(totalDuration / 60);
+
+  return (
+    <TabTransition>
+      <div className="min-h-screen bg-black pb-52">
+        {/* Hero Header */}
+        <motion.div
+          className="relative h-72 overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Background blur */}
+          <div 
+            className="absolute inset-0 bg-gradient-to-b from-primary/30 via-primary/10 to-black"
+            style={{
+              backgroundImage: artistCover ? `url(${artistCover})` : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(60px)',
+              opacity: 0.5,
+            }}
+          />
+          
+          {/* Back button */}
+          <motion.button
+            className="absolute top-4 left-4 z-10 p-2 rounded-full bg-black/30 backdrop-blur-xl"
+            onClick={() => navigate(-1)}
+            whileTap={{ scale: 0.9 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={iosSpring}
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </motion.button>
+
+          {/* Artist info */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 pt-8">
+            <motion.div
+              className="w-28 h-28 rounded-full bg-gradient-to-br from-primary/50 to-accent/50 flex items-center justify-center overflow-hidden shadow-2xl mb-4"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ ...iosBounce, delay: 0.1 }}
+            >
+              {artistCover ? (
+                <img src={artistCover} alt={decodedArtistName} className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-14 h-14 text-white/70" />
+              )}
+            </motion.div>
+            
+            <motion.h1
+              className="text-2xl font-bold text-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...iosSpring, delay: 0.2 }}
+            >
+              {decodedArtistName}
+            </motion.h1>
+            
+            <motion.p
+              className="text-sm text-muted-foreground mt-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              {songs.length} {songs.length === 1 ? 'song' : 'songs'} • {totalMinutes} min
+            </motion.p>
+          </div>
+        </motion.div>
+
+        {/* Action buttons */}
+        <motion.div
+          className="flex items-center justify-center gap-4 px-6 -mt-6 relative z-10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...iosSpring, delay: 0.3 }}
+        >
+          <motion.button
+            className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 backdrop-blur-xl font-semibold"
+            onClick={handleShufflePlay}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            disabled={songs.length === 0}
+          >
+            <Shuffle className="w-5 h-5" />
+            Shuffle
+          </motion.button>
+          
+          <motion.button
+            className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/30"
+            onClick={handlePlayAll}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            disabled={songs.length === 0}
+          >
+            <Play className="w-5 h-5 fill-current" />
+            Play All
+          </motion.button>
+        </motion.div>
+
+        {/* Songs list */}
+        <div className="px-5 pt-8">
+          <motion.h2
+            className="text-lg font-semibold mb-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ ...iosSpring, delay: 0.4 }}
+          >
+            Songs
+          </motion.h2>
+
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <motion.div 
+                className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
+            </div>
+          ) : songs.length === 0 ? (
+            <motion.div
+              className="text-center py-16"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <Music className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
+              <p className="text-muted-foreground">No songs found for this artist</p>
+            </motion.div>
+          ) : (
+            <div className="space-y-1">
+              {songs.map((song, index) => {
+                const isActive = currentSong?.id === song.id;
+                return (
+                  <motion.div
+                    key={song.id}
+                    className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${
+                      isActive ? 'bg-primary/10' : 'active:bg-white/5'
+                    }`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ ...iosSpring, delay: 0.4 + index * 0.03 }}
+                  >
+                    {/* Track number or playing indicator */}
+                    <div className="w-8 text-center flex-shrink-0">
+                      {isActive && isPlaying ? (
+                        <div className="flex items-end justify-center gap-[2px] h-4">
+                          {[...Array(3)].map((_, i) => (
+                            <motion.div
+                              key={i}
+                              className="w-[3px] bg-primary rounded-full"
+                              animate={{ height: [4, 12, 4] }}
+                              transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.12, ease: "easeInOut" }}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">{index + 1}</span>
+                      )}
+                    </div>
+
+                    <motion.button
+                      className="flex-1 flex items-center gap-3 text-left min-w-0"
+                      onClick={() => handlePlaySong(song, index)}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg">
+                        {song.cover_url ? (
+                          <img src={song.cover_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Music className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium text-[15px] truncate ${isActive ? 'text-primary' : ''}`}>
+                          {song.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+                          {song.album && <span className="truncate">{song.album}</span>}
+                          {song.duration && (
+                            <span className="flex-shrink-0">{formatDuration(song.duration)}</span>
+                          )}
+                        </div>
+                      </div>
+                    </motion.button>
+                    
+                    <div className="flex items-center gap-1">
+                      <LikeButton songId={song.id} size="sm" />
+                      <DownloadButton song={song} size="sm" />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <BottomNav />
+        <MiniPlayer />
+        <FullscreenPlayer />
+      </div>
+    </TabTransition>
+  );
+};
+
+export default ArtistDetail;
