@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Music, Heart, ListMusic, Clock, Plus, Download, CloudOff, Trash2 } from 'lucide-react';
+import { Music, Heart, ListMusic, Clock, Plus, Download, CloudOff, Trash2, User, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlayer, Song } from '@/contexts/PlayerContext';
@@ -32,6 +32,7 @@ const Library = () => {
   const [likedSongs, setLikedSongs] = useState<Song[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<any[]>([]);
+  const [artists, setArtists] = useState<{ name: string; songCount: number; coverUrl: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('liked');
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
@@ -45,7 +46,7 @@ const Library = () => {
   const fetchLibrary = async () => {
     if (!user) return;
 
-    const [liked, recent, userPlaylists] = await Promise.all([
+    const [liked, recent, userPlaylists, allSongs] = await Promise.all([
       supabase
         .from('user_library')
         .select('*, songs(*)')
@@ -62,6 +63,10 @@ const Library = () => {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
+      supabase
+        .from('songs')
+        .select('artist, cover_url')
+        .eq('is_visible', true),
     ]);
 
     if (liked.data) {
@@ -94,6 +99,31 @@ const Library = () => {
 
     if (userPlaylists.data) {
       setPlaylists(userPlaylists.data);
+    }
+
+    // Build artists list from all songs
+    if (allSongs.data) {
+      const artistMap = new Map<string, { count: number; coverUrl: string | null }>();
+      allSongs.data.forEach(song => {
+        const artistName = song.artist.trim();
+        const existing = artistMap.get(artistName);
+        if (existing) {
+          existing.count++;
+          // Keep first cover found
+        } else {
+          artistMap.set(artistName, { count: 1, coverUrl: song.cover_url });
+        }
+      });
+      
+      const artistList = Array.from(artistMap.entries())
+        .map(([name, data]) => ({
+          name,
+          songCount: data.count,
+          coverUrl: data.coverUrl,
+        }))
+        .sort((a, b) => b.songCount - a.songCount); // Sort by song count
+      
+      setArtists(artistList);
     }
 
     setLoading(false);
@@ -339,8 +369,8 @@ const Library = () => {
             >
               {[
                 { value: 'liked', icon: Heart, label: 'Liked' },
+                { value: 'artists', icon: User, label: 'Artists' },
                 { value: 'downloads', icon: Download, label: 'Downloads' },
-                { value: 'recent', icon: Clock, label: 'Recent' },
                 { value: 'playlists', icon: ListMusic, label: 'Playlists' },
               ].map((tab) => {
                 const Icon = tab.icon;
@@ -377,11 +407,7 @@ const Library = () => {
               )}
             </TabsContent>
 
-            <TabsContent value="downloads" className="mt-0">
-              <DownloadsList />
-            </TabsContent>
-
-            <TabsContent value="recent" className="mt-0">
+            <TabsContent value="artists" className="mt-0">
               {loading ? (
                 <motion.div className="flex justify-center py-16">
                   <motion.div 
@@ -390,9 +416,69 @@ const Library = () => {
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   />
                 </motion.div>
+              ) : artists.length === 0 ? (
+                <motion.div 
+                  className="text-center py-16"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={iosSpring}
+                >
+                  <motion.div
+                    className="w-20 h-20 rounded-3xl mx-auto mb-4 flex items-center justify-center"
+                    style={{ background: 'rgba(118, 118, 128, 0.12)' }}
+                    initial={{ scale: 0, rotate: -20 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ ...iosBounce, delay: 0.1 }}
+                  >
+                    <User className="w-10 h-10 text-muted-foreground/50" />
+                  </motion.div>
+                  <p className="text-muted-foreground text-lg">No artists yet</p>
+                  <p className="text-sm text-muted-foreground/70 mt-2">Upload songs to see artists here</p>
+                </motion.div>
               ) : (
-                <SongList songs={recentlyPlayed} emptyMessage="No recently played songs" emptyIcon={Clock} />
+                <div className="grid grid-cols-2 gap-4">
+                  {artists.map((artist, index) => (
+                    <motion.div
+                      key={artist.name}
+                      className="rounded-2xl overflow-hidden cursor-pointer"
+                      style={{
+                        background: 'rgba(28, 28, 30, 0.8)',
+                        border: '1px solid rgba(255, 255, 255, 0.06)',
+                      }}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ ...iosSpring, delay: index * 0.03 }}
+                      whileHover={{ scale: 1.03, y: -4 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+                    >
+                      <div className="aspect-square bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center relative overflow-hidden">
+                        {artist.coverUrl ? (
+                          <img src={artist.coverUrl} alt={artist.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-12 h-12 text-muted-foreground" />
+                        )}
+                        {/* Play indicator */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                            <Play className="w-6 h-6 fill-current text-primary-foreground ml-0.5" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <p className="font-semibold text-[15px] truncate">{artist.name}</p>
+                        <p className="text-[13px] text-muted-foreground">
+                          {artist.songCount} {artist.songCount === 1 ? 'song' : 'songs'}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="downloads" className="mt-0">
+              <DownloadsList />
             </TabsContent>
 
             <TabsContent value="playlists" className="mt-0">

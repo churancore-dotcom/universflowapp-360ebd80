@@ -14,6 +14,7 @@ import Home from "./pages/Home";
 import Search from "./pages/Search";
 import Library from "./pages/Library";
 import PlaylistDetail from "./pages/PlaylistDetail";
+import ArtistDetail from "./pages/ArtistDetail";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -53,6 +54,7 @@ const AnimatedRoutes = () => {
         <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
         <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
         <Route path="/playlist/:id" element={<ProtectedRoute><PlaylistDetail /></ProtectedRoute>} />
+        <Route path="/artist/:artistName" element={<ProtectedRoute><ArtistDetail /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
