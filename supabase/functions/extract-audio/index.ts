@@ -5,14 +5,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Fallback Piped instances - will be updated dynamically
-const FALLBACK_PIPED_INSTANCES = [
+// Hardcoded Piped instances - multiple reliable ones for redundancy
+const PIPED_INSTANCES = [
   'https://api.piped.private.coffee',
   'https://pipedapi.kavin.rocks',
   'https://pipedapi.darkness.services',
   'https://pipedapi.syncpundit.io',
   'https://api.piped.yt',
   'https://pipedapi.adminforge.de',
+  'https://pipedapi.r4fo.com',
+  'https://pipedapi.drgns.space',
+  'https://pipedapi.in.projectsegfau.lt',
+  'https://pipedapi.leptons.xyz',
+  'https://pipedapi.moomoo.me',
+  'https://pipedapi.colinslegacy.com',
 ];
 
 interface PipedInstance {
@@ -92,40 +98,10 @@ function isPlaylistUrl(url: string): boolean {
   }
 }
 
-// Fetch active Piped instances dynamically
-async function fetchPipedInstances(): Promise<string[]> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    const response = await fetch('https://piped-instances.kavin.rocks/', {
-      signal: controller.signal,
-      headers: { 'Accept': 'application/json' },
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      console.log('Failed to fetch Piped instances, using fallbacks');
-      return FALLBACK_PIPED_INSTANCES;
-    }
-    
-    const instances: PipedInstance[] = await response.json();
-    
-    // Filter for instances with good uptime and sort by uptime
-    const goodInstances = instances
-      .filter(i => i.api_url && (i.uptime_24h === undefined || i.uptime_24h > 90))
-      .sort((a, b) => (b.uptime_24h || 0) - (a.uptime_24h || 0))
-      .slice(0, 10)
-      .map(i => i.api_url);
-    
-    console.log(`Fetched ${goodInstances.length} Piped instances`);
-    return goodInstances.length > 0 ? goodInstances : FALLBACK_PIPED_INSTANCES;
-    
-  } catch (error) {
-    console.log('Error fetching Piped instances:', error);
-    return FALLBACK_PIPED_INSTANCES;
-  }
+// Get Piped instances - use hardcoded list directly for reliability
+function getPipedInstances(): string[] {
+  // Shuffle to distribute load
+  return [...PIPED_INSTANCES].sort(() => Math.random() - 0.5);
 }
 
 // Try a single Piped instance
@@ -199,23 +175,20 @@ async function tryPipedInstance(apiUrl: string, videoId: string): Promise<Extrac
 async function extractFromYouTube(videoId: string): Promise<ExtractionResult> {
   console.log(`\n=== Extracting YouTube video: ${videoId} ===`);
   
-  // Fetch working instances
-  const instances = await fetchPipedInstances();
+  // Get shuffled instances
+  const instances = getPipedInstances();
   console.log(`Testing ${instances.length} Piped instances...`);
-  
-  // Shuffle to distribute load
-  const shuffled = [...instances].sort(() => Math.random() - 0.5);
 
-  // Try instances in parallel batches of 3
-  for (let i = 0; i < shuffled.length; i += 3) {
-    const batch = shuffled.slice(i, i + 3);
-    console.log(`\nBatch ${Math.floor(i/3) + 1}:`);
+  // Try instances in parallel batches of 4
+  for (let i = 0; i < instances.length; i += 4) {
+    const batch = instances.slice(i, i + 4);
+    console.log(`\nBatch ${Math.floor(i/4) + 1}:`);
     
     const results = await Promise.all(
-      batch.map(instance => tryPipedInstance(instance, videoId))
+      batch.map((instance: string) => tryPipedInstance(instance, videoId))
     );
 
-    const success = results.find(r => r?.success);
+    const success = results.find((r: ExtractionResult | null) => r?.success);
     if (success) {
       return success;
     }
