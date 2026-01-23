@@ -3,6 +3,9 @@ import { StrictMode } from "react";
 import App from "./App.tsx";
 import "./index.css";
 
+// Initialize Median detection globals
+import "@/lib/median";
+
 // Error boundary for unhandled errors (helps with WebView debugging)
 window.addEventListener('error', (event) => {
   console.error('Global error:', event.error);
