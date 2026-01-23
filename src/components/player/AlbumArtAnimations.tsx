@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef, useEffect, useState } from 'react';
+import { memo, useMemo, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface AlbumArtAnimationsProps {
@@ -17,656 +17,1032 @@ const getAnimationType = (songId: string): number => {
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash;
   }
-  return Math.abs(hash) % 8; // 8 different animation types
+  return Math.abs(hash) % 18; // 18 different premium animation types
 };
 
-// Animation 1: Electric Pulse Storm
-const ElectricPulseStorm = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
-  const bolts = useMemo(() => Array.from({ length: 16 }, (_, i) => ({
-    id: i,
-    angle: (i * 22.5),
-    delay: i * 0.05,
-  })), []);
-
-  return (
-    <>
-      {/* Electric core */}
-      <motion.div
-        className="absolute inset-[20%] rounded-full"
-        style={{
-          background: `radial-gradient(circle, 
-            hsl(var(--primary) / ${0.8 + bass * 0.2}) 0%, 
-            hsl(var(--primary) / ${0.4 + mid * 0.3}) 40%, 
-            transparent 70%)`,
-          filter: `blur(${8 + bass * 15}px)`,
-        }}
-        animate={{
-          scale: [1, 1.3 + bass * 0.5, 1],
-        }}
-        transition={{ duration: 0.15, repeat: Infinity }}
-      />
-      
-      {/* Lightning bolts */}
-      {bolts.map((bolt) => (
-        <motion.div
-          key={bolt.id}
-          className="absolute left-1/2 top-1/2 origin-bottom"
-          style={{
-            width: '3px',
-            height: `${80 + bass * 60}px`,
-            background: `linear-gradient(to top, 
-              hsl(var(--primary) / ${0.9 + high * 0.1}), 
-              hsl(var(--primary) / 0.3), 
-              transparent)`,
-            transform: `translate(-50%, -100%) rotate(${bolt.angle}deg)`,
-            filter: 'blur(1px)',
-            boxShadow: `0 0 ${10 + bass * 20}px hsl(var(--primary) / 0.8)`,
-          }}
-          animate={{
-            scaleY: [0.3, 1 + bass * 0.8, 0.3],
-            opacity: [0.3, 1, 0.3],
-          }}
-          transition={{
-            duration: 0.12,
-            repeat: Infinity,
-            delay: bolt.delay,
-          }}
-        />
-      ))}
-
-      {/* Outer shockwave rings */}
-      {[0, 1, 2].map((i) => (
-        <motion.div
-          key={`ring-${i}`}
-          className="absolute inset-[-20%] rounded-full border-2"
-          style={{
-            borderColor: `hsl(var(--primary) / ${0.5 - i * 0.15})`,
-            boxShadow: `0 0 ${20 + bass * 30}px hsl(var(--primary) / ${0.3 - i * 0.1})`,
-          }}
-          animate={{
-            scale: [1 + i * 0.1, 1.4 + bass * 0.6 + i * 0.15, 1 + i * 0.1],
-            opacity: [0.6, 0.2, 0.6],
-          }}
-          transition={{
-            duration: 0.2,
-            repeat: Infinity,
-            delay: i * 0.06,
-          }}
-        />
-      ))}
-    </>
-  );
-});
-ElectricPulseStorm.displayName = 'ElectricPulseStorm';
-
-// Animation 2: Liquid Morphing Blob
-const LiquidMorphingBlob = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
-  const [morphPhase, setMorphPhase] = useState(0);
+// Animation 1: Liquid Glass Flow - iOS 26 inspired
+const LiquidGlassFlow = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [phase, setPhase] = useState(0);
   
   useEffect(() => {
     const interval = setInterval(() => {
-      setMorphPhase(p => (p + 1) % 360);
+      setPhase(p => (p + 2) % 360);
     }, 50);
     return () => clearInterval(interval);
   }, []);
 
-  const blobPath = useMemo(() => {
-    const points = 12;
-    const baseRadius = 120;
-    const variance = 30 + bass * 50;
-    
-    let path = '';
-    for (let i = 0; i <= points; i++) {
-      const angle = (i / points) * Math.PI * 2;
-      const offset = Math.sin(angle * 3 + morphPhase * 0.1) * variance * (1 + mid);
-      const r = baseRadius + offset;
-      const x = 160 + Math.cos(angle) * r;
-      const y = 160 + Math.sin(angle) * r;
-      path += i === 0 ? `M ${x} ${y}` : ` Q ${x + 10} ${y + 10} ${x} ${y}`;
-    }
-    return path + ' Z';
-  }, [morphPhase, bass, mid]);
-
   return (
     <>
-      <svg className="absolute inset-[-25%] w-[150%] h-[150%]" viewBox="0 0 320 320">
-        <defs>
-          <filter id="goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -12" result="goo" />
-          </filter>
-          <linearGradient id="blobGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={`hsl(var(--primary))`} stopOpacity={0.8 + bass * 0.2} />
-            <stop offset="50%" stopColor={`hsl(var(--primary))`} stopOpacity={0.5 + mid * 0.3} />
-            <stop offset="100%" stopColor={`hsl(var(--primary))`} stopOpacity={0.3 + high * 0.2} />
-          </linearGradient>
-        </defs>
-        <motion.path
-          d={blobPath}
-          fill="url(#blobGradient)"
-          filter="url(#goo)"
-          animate={{
-            scale: 1 + bass * 0.15,
-          }}
-          style={{ transformOrigin: 'center' }}
-        />
-      </svg>
-      
-      {/* Inner glow pulse */}
-      <motion.div
-        className="absolute inset-[10%] rounded-full"
-        style={{
-          background: `radial-gradient(circle, hsl(var(--primary) / ${0.6 + bass * 0.4}) 0%, transparent 70%)`,
-          filter: `blur(${15 + bass * 20}px)`,
-        }}
-        animate={{
-          scale: [1, 1.2 + bass * 0.3, 1],
-        }}
-        transition={{ duration: 0.15, repeat: Infinity }}
-      />
-    </>
-  );
-});
-LiquidMorphingBlob.displayName = 'LiquidMorphingBlob';
-
-// Animation 3: Particle Explosion
-const ParticleExplosion = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
-  const particles = useMemo(() => Array.from({ length: 40 }, (_, i) => ({
-    id: i,
-    angle: Math.random() * 360,
-    distance: 80 + Math.random() * 100,
-    size: 3 + Math.random() * 6,
-    speed: 0.8 + Math.random() * 0.4,
-  })), []);
-
-  return (
-    <>
-      {/* Central burst */}
-      <motion.div
-        className="absolute inset-[25%] rounded-full"
-        style={{
-          background: `radial-gradient(circle, 
-            hsl(var(--primary)) 0%, 
-            hsl(var(--primary) / 0.5) 50%, 
-            transparent 70%)`,
-          filter: `blur(${5 + bass * 15}px)`,
-        }}
-        animate={{
-          scale: [0.8, 1.5 + bass * 0.8, 0.8],
-          opacity: [0.5, 1, 0.5],
-        }}
-        transition={{ duration: 0.12, repeat: Infinity }}
-      />
-
-      {/* Exploding particles */}
-      {particles.map((p) => {
-        const freq = p.id % 3 === 0 ? bass : p.id % 3 === 1 ? mid : high;
-        return (
-          <motion.div
-            key={p.id}
-            className="absolute rounded-full"
-            style={{
-              width: p.size + freq * 8,
-              height: p.size + freq * 8,
-              left: '50%',
-              top: '50%',
-              background: `radial-gradient(circle, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.3) 100%)`,
-              boxShadow: `0 0 ${8 + freq * 15}px hsl(var(--primary) / 0.8)`,
-            }}
-            animate={{
-              x: Math.cos(p.angle * Math.PI / 180) * (p.distance + freq * 80) - p.size / 2,
-              y: Math.sin(p.angle * Math.PI / 180) * (p.distance + freq * 80) - p.size / 2,
-              opacity: [0.3, 1, 0.3],
-              scale: [0.5, 1 + freq * 0.5, 0.5],
-            }}
-            transition={{
-              duration: 0.15 * p.speed,
-              repeat: Infinity,
-            }}
-          />
-        );
-      })}
-
-      {/* Shockwave */}
-      <motion.div
-        className="absolute inset-[-10%] rounded-full border-4"
-        style={{
-          borderColor: `hsl(var(--primary) / ${0.6 + bass * 0.4})`,
-          boxShadow: `0 0 ${30 + bass * 50}px hsl(var(--primary) / 0.5)`,
-        }}
-        animate={{
-          scale: [0.6, 1.3 + bass * 0.4, 0.6],
-          opacity: [0.8, 0.2, 0.8],
-        }}
-        transition={{ duration: 0.2, repeat: Infinity }}
-      />
-    </>
-  );
-});
-ParticleExplosion.displayName = 'ParticleExplosion';
-
-// Animation 4: Nebula Swirl
-const NebulaSwirl = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
-  const clouds = useMemo(() => Array.from({ length: 6 }, (_, i) => ({
-    id: i,
-    rotation: i * 60,
-    scale: 0.8 + i * 0.1,
-  })), []);
-
-  return (
-    <>
-      {/* Rotating nebula layers */}
-      {clouds.map((cloud) => (
+      {/* Soft ambient glow layers */}
+      {[0, 1, 2].map((i) => (
         <motion.div
-          key={cloud.id}
-          className="absolute inset-[-30%]"
+          key={i}
+          className="absolute inset-[-40%] rounded-full"
           style={{
-            background: `conic-gradient(from ${cloud.rotation}deg at 50% 50%, 
-              transparent 0deg, 
-              hsl(var(--primary) / ${0.2 + bass * 0.3}) 60deg, 
-              hsl(var(--primary) / ${0.3 + mid * 0.2}) 120deg, 
-              transparent 180deg,
-              hsl(var(--primary) / ${0.15 + high * 0.2}) 240deg,
-              transparent 360deg)`,
-            filter: `blur(${20 + cloud.id * 5}px)`,
+            background: `radial-gradient(ellipse ${60 + i * 15}% ${80 + i * 10}% at ${50 + Math.sin((phase + i * 60) * Math.PI / 180) * 20}% ${50 + Math.cos((phase + i * 40) * Math.PI / 180) * 15}%, 
+              hsl(var(--primary) / ${0.25 + bass * 0.15 - i * 0.05}) 0%, 
+              hsl(var(--primary) / ${0.12 - i * 0.03}) 50%,
+              transparent 70%)`,
+            filter: `blur(${40 + i * 20}px)`,
           }}
           animate={{
-            rotate: [cloud.rotation, cloud.rotation + 360],
-            scale: [cloud.scale, cloud.scale + bass * 0.3, cloud.scale],
+            scale: [1, 1.08 + bass * 0.06, 1],
+            rotate: i % 2 === 0 ? phase * 0.3 : -phase * 0.2,
           }}
-          transition={{
-            rotate: { duration: 8 - cloud.id * 0.5, repeat: Infinity, ease: 'linear' },
-            scale: { duration: 0.15, repeat: Infinity },
+          transition={{ duration: 0.4, ease: 'easeInOut' }}
+        />
+      ))}
+      
+      {/* Flowing light streaks */}
+      <motion.div
+        className="absolute inset-[-30%]"
+        style={{
+          background: `conic-gradient(from ${phase}deg at 50% 50%,
+            transparent 0deg,
+            hsl(var(--primary) / ${0.08 + mid * 0.08}) 45deg,
+            transparent 90deg,
+            hsl(var(--primary) / ${0.06 + high * 0.06}) 180deg,
+            transparent 225deg,
+            hsl(var(--primary) / ${0.1 + bass * 0.1}) 315deg,
+            transparent 360deg)`,
+          filter: 'blur(50px)',
+        }}
+        animate={{
+          scale: [1, 1.05 + bass * 0.03, 1],
+        }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      />
+      
+      {/* Soft center bloom */}
+      <motion.div
+        className="absolute inset-[5%] rounded-full"
+        style={{
+          background: `radial-gradient(circle at 50% 50%, 
+            hsl(var(--primary) / ${0.2 + bass * 0.15}) 0%, 
+            hsl(var(--primary) / 0.05) 60%,
+            transparent 80%)`,
+          filter: `blur(${25 + bass * 15}px)`,
+        }}
+        animate={{
+          scale: [1, 1.12 + bass * 0.08, 1],
+        }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+LiquidGlassFlow.displayName = 'LiquidGlassFlow';
+
+// Animation 2: Breathing Aura - Gentle pulsing halo
+const BreathingAura = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  return (
+    <>
+      {/* Outer soft halos */}
+      {[0, 1, 2, 3].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            inset: `${-15 - i * 12}%`,
+            background: `radial-gradient(circle, 
+              transparent 50%, 
+              hsl(var(--primary) / ${0.08 - i * 0.015}) 70%,
+              hsl(var(--primary) / ${0.04 - i * 0.008}) 85%,
+              transparent 100%)`,
+            filter: `blur(${20 + i * 10}px)`,
+          }}
+          animate={{
+            scale: [1, 1.04 + bass * 0.04 + i * 0.01, 1],
+            opacity: [0.7, 1, 0.7],
+          }}
+          transition={{ 
+            duration: 0.5 + i * 0.1, 
+            ease: 'easeInOut',
+            delay: i * 0.05,
           }}
         />
       ))}
+      
+      {/* Inner glow pulse */}
+      <motion.div
+        className="absolute inset-[-5%] rounded-full"
+        style={{
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${0.3 + bass * 0.2}) 0%, 
+            hsl(var(--primary) / 0.1) 40%,
+            transparent 65%)`,
+          filter: `blur(${30 + bass * 20}px)`,
+        }}
+        animate={{
+          scale: [1, 1.1 + bass * 0.1, 1],
+        }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+BreathingAura.displayName = 'BreathingAura';
 
-      {/* Star field */}
-      {Array.from({ length: 20 }, (_, i) => (
+// Animation 3: Aurora Waves - Flowing color bands
+const AuroraWaves = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [offset, setOffset] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOffset(o => (o + 1) % 100);
+    }, 40);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      {/* Flowing aurora bands */}
+      {[0, 1, 2].map((i) => (
         <motion.div
-          key={`star-${i}`}
-          className="absolute rounded-full bg-white"
+          key={i}
+          className="absolute inset-[-50%]"
           style={{
-            width: 2 + Math.random() * 3,
-            height: 2 + Math.random() * 3,
-            left: `${10 + (i * 4.5) % 80}%`,
-            top: `${5 + (i * 7.3) % 90}%`,
-            boxShadow: '0 0 6px white',
+            background: `linear-gradient(${120 + i * 40 + offset}deg, 
+              transparent 20%,
+              hsl(var(--primary) / ${0.12 + (i === 0 ? bass : i === 1 ? mid : high) * 0.1}) 35%,
+              hsl(var(--primary) / ${0.18 + (i === 0 ? bass : i === 1 ? mid : high) * 0.12}) 50%,
+              hsl(var(--primary) / ${0.1 + (i === 0 ? bass : i === 1 ? mid : high) * 0.08}) 65%,
+              transparent 80%)`,
+            filter: `blur(${45 + i * 15}px)`,
+            transform: `translateY(${Math.sin((offset + i * 30) * Math.PI / 50) * 10}%)`,
           }}
           animate={{
-            opacity: [0, 1, 0],
-            scale: [0.5, 1.5 + high * 1, 0.5],
+            scale: [1, 1.03 + bass * 0.02, 1],
           }}
-          transition={{
-            duration: 0.3 + i * 0.05,
-            repeat: Infinity,
+          transition={{ duration: 0.4, ease: 'easeInOut' }}
+        />
+      ))}
+      
+      {/* Subtle shimmer overlay */}
+      <motion.div
+        className="absolute inset-[-20%]"
+        style={{
+          background: `radial-gradient(ellipse 100% 60% at 50% ${40 + Math.sin(offset * Math.PI / 25) * 15}%, 
+            hsl(var(--primary) / ${0.15 + mid * 0.1}) 0%,
+            transparent 60%)`,
+          filter: 'blur(35px)',
+        }}
+        animate={{
+          opacity: [0.6, 1, 0.6],
+        }}
+        transition={{ duration: 0.5, ease: 'easeInOut' }}
+      />
+    </>
+  );
+});
+AuroraWaves.displayName = 'AuroraWaves';
+
+// Animation 4: Depth Pulse - 3D depth illusion
+const DepthPulse = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  return (
+    <>
+      {/* Layered depth rings */}
+      {[0, 1, 2, 3, 4].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-[24px]"
+          style={{
+            inset: `${-5 - i * 8}%`,
+            background: `linear-gradient(135deg, 
+              hsl(var(--primary) / ${0.04 + i * 0.02}) 0%,
+              transparent 50%,
+              hsl(var(--primary) / ${0.02 + i * 0.01}) 100%)`,
+            boxShadow: `inset 0 0 ${30 + i * 10}px hsl(var(--primary) / ${0.05 - i * 0.008})`,
+            filter: `blur(${8 + i * 6}px)`,
+          }}
+          animate={{
+            scale: [1, 1.02 + bass * 0.02 + i * 0.005, 1],
+            opacity: [0.5 + i * 0.08, 1, 0.5 + i * 0.08],
+          }}
+          transition={{ 
+            duration: 0.35, 
+            ease: 'easeOut',
+            delay: i * 0.03,
+          }}
+        />
+      ))}
+      
+      {/* Soft spotlight */}
+      <motion.div
+        className="absolute inset-[-15%] rounded-full"
+        style={{
+          background: `radial-gradient(circle at 50% 40%, 
+            hsl(var(--primary) / ${0.25 + bass * 0.2}) 0%, 
+            transparent 50%)`,
+          filter: `blur(${35 + bass * 20}px)`,
+        }}
+        animate={{
+          scale: [1, 1.08 + bass * 0.06, 1],
+        }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+DepthPulse.displayName = 'DepthPulse';
+
+// Animation 5: Silk Ripple - Smooth fabric-like motion
+const SilkRipple = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [ripple, setRipple] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRipple(r => (r + 3) % 360);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      {/* Silk waves */}
+      {[0, 1, 2, 3].map((i) => {
+        const waveOffset = Math.sin((ripple + i * 45) * Math.PI / 180);
+        return (
+          <motion.div
+            key={i}
+            className="absolute inset-[-35%] rounded-full"
+            style={{
+              background: `radial-gradient(ellipse ${70 + waveOffset * 15}% ${60 + waveOffset * 10}% at ${50 + waveOffset * 10}% ${50 + waveOffset * 8}%, 
+                hsl(var(--primary) / ${0.1 + (i % 2 === 0 ? bass : mid) * 0.08}) 0%,
+                transparent 70%)`,
+              filter: `blur(${40 + i * 12}px)`,
+            }}
+            animate={{
+              scale: [1, 1.04 + bass * 0.03, 1],
+            }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
+          />
+        );
+      })}
+      
+      {/* Center warmth */}
+      <motion.div
+        className="absolute inset-[0%] rounded-full"
+        style={{
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${0.2 + bass * 0.15}) 0%, 
+            hsl(var(--primary) / 0.05) 50%,
+            transparent 70%)`,
+          filter: `blur(${28 + bass * 18}px)`,
+        }}
+        animate={{
+          scale: [1, 1.1 + bass * 0.08, 1],
+        }}
+        transition={{ duration: 0.28, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+SilkRipple.displayName = 'SilkRipple';
+
+// Animation 6: Vinyl Glow - Spinning vinyl with subtle glow
+const VinylGlow = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [rotation, setRotation] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotation(r => (r + 1.5) % 360);
+    }, 40);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      {/* Vinyl grooves effect */}
+      <motion.div
+        className="absolute inset-[-25%] rounded-full"
+        style={{
+          background: `repeating-radial-gradient(circle at 50% 50%,
+            transparent 0px,
+            transparent 8px,
+            hsl(var(--primary) / ${0.03 + bass * 0.02}) 9px,
+            transparent 10px)`,
+          filter: 'blur(2px)',
+          transform: `rotate(${rotation}deg)`,
+        }}
+      />
+      
+      {/* Spinning highlight */}
+      <motion.div
+        className="absolute inset-[-20%] rounded-full"
+        style={{
+          background: `conic-gradient(from ${rotation}deg at 50% 50%,
+            transparent 0deg,
+            hsl(var(--primary) / ${0.08 + mid * 0.06}) 30deg,
+            transparent 60deg,
+            transparent 180deg,
+            hsl(var(--primary) / ${0.06 + high * 0.05}) 210deg,
+            transparent 240deg)`,
+          filter: 'blur(30px)',
+        }}
+        animate={{
+          scale: [1, 1.03 + bass * 0.02, 1],
+        }}
+        transition={{ duration: 0.35, ease: 'easeInOut' }}
+      />
+      
+      {/* Center label glow */}
+      <motion.div
+        className="absolute inset-[20%] rounded-full"
+        style={{
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${0.25 + bass * 0.2}) 0%, 
+            hsl(var(--primary) / 0.08) 60%,
+            transparent 80%)`,
+          filter: `blur(${20 + bass * 15}px)`,
+        }}
+        animate={{
+          scale: [1, 1.15 + bass * 0.1, 1],
+        }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+VinylGlow.displayName = 'VinylGlow';
+
+// Animation 7: Prism Refraction - Light splitting effect
+const PrismRefraction = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [angle, setAngle] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAngle(a => (a + 1) % 360);
+    }, 60);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      {/* Refracted light beams */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute inset-[-40%]"
+          style={{
+            background: `linear-gradient(${angle + i * 30}deg, 
+              transparent 30%,
+              hsl(var(--primary) / ${0.06 + (i === 0 ? bass : i === 1 ? mid : high) * 0.06}) 45%,
+              hsl(var(--primary) / ${0.1 + (i === 0 ? bass : i === 1 ? mid : high) * 0.08}) 50%,
+              hsl(var(--primary) / ${0.06 + (i === 0 ? bass : i === 1 ? mid : high) * 0.06}) 55%,
+              transparent 70%)`,
+            filter: `blur(${35 + i * 10}px)`,
+          }}
+          animate={{
+            opacity: [0.6, 1, 0.6],
+          }}
+          transition={{ duration: 0.5, ease: 'easeInOut', delay: i * 0.1 }}
+        />
+      ))}
+      
+      {/* Center prism glow */}
+      <motion.div
+        className="absolute inset-[-10%] rounded-full"
+        style={{
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${0.22 + bass * 0.18}) 0%, 
+            hsl(var(--primary) / 0.08) 50%,
+            transparent 70%)`,
+          filter: `blur(${30 + bass * 20}px)`,
+        }}
+        animate={{
+          scale: [1, 1.1 + bass * 0.08, 1],
+        }}
+        transition={{ duration: 0.28, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+PrismRefraction.displayName = 'PrismRefraction';
+
+// Animation 8: Nebula Cloud - Soft cosmic clouds
+const NebulaCloud = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [drift, setDrift] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDrift(d => (d + 0.5) % 100);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      {/* Drifting cloud layers */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute inset-[-45%]"
+          style={{
+            background: `radial-gradient(ellipse ${100 + Math.sin(drift * 0.1 + i) * 20}% ${80 + Math.cos(drift * 0.08 + i) * 15}% at ${45 + Math.sin(drift * 0.05 + i * 2) * 15}% ${50 + Math.cos(drift * 0.06 + i) * 10}%, 
+              hsl(var(--primary) / ${0.12 + (i === 0 ? bass : i === 1 ? mid : high) * 0.1}) 0%,
+              hsl(var(--primary) / ${0.05}) 50%,
+              transparent 70%)`,
+            filter: `blur(${50 + i * 15}px)`,
+          }}
+          animate={{
+            scale: [1, 1.03 + bass * 0.02, 1],
+          }}
+          transition={{ duration: 0.45, ease: 'easeInOut' }}
+        />
+      ))}
+      
+      {/* Soft star points */}
+      {[0, 1, 2, 3].map((i) => (
+        <motion.div
+          key={`star-${i}`}
+          className="absolute w-2 h-2 rounded-full"
+          style={{
+            left: `${25 + i * 18}%`,
+            top: `${20 + (i * 23) % 60}%`,
+            background: 'white',
+            filter: 'blur(1px)',
+          }}
+          animate={{
+            opacity: [0.2, 0.6 + high * 0.4, 0.2],
+            scale: [0.8, 1.2 + high * 0.3, 0.8],
+          }}
+          transition={{ duration: 0.6, delay: i * 0.15 }}
+        />
+      ))}
+      
+      {/* Core glow */}
+      <motion.div
+        className="absolute inset-[5%] rounded-full"
+        style={{
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${0.2 + bass * 0.15}) 0%, 
+            transparent 60%)`,
+          filter: `blur(${25 + bass * 18}px)`,
+        }}
+        animate={{
+          scale: [1, 1.12 + bass * 0.08, 1],
+        }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+NebulaCloud.displayName = 'NebulaCloud';
+
+// Animation 9: Crystal Shimmer - Faceted gem reflections
+const CrystalShimmer = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [shimmer, setShimmer] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShimmer(s => (s + 2) % 360);
+    }, 40);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      {/* Faceted reflections */}
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute"
+          style={{
+            inset: '0%',
+            background: `linear-gradient(${shimmer + i * 60}deg, 
+              transparent 40%,
+              hsl(var(--primary) / ${0.08 + (i % 2 === 0 ? bass : mid) * 0.06}) 48%,
+              hsl(var(--primary) / ${0.12 + (i % 2 === 0 ? bass : mid) * 0.08}) 50%,
+              hsl(var(--primary) / ${0.08 + (i % 2 === 0 ? bass : mid) * 0.06}) 52%,
+              transparent 60%)`,
+            filter: `blur(${15 + i * 5}px)`,
+          }}
+          animate={{
+            opacity: [0.4, 0.9, 0.4],
+          }}
+          transition={{ duration: 0.4, delay: i * 0.06 }}
+        />
+      ))}
+      
+      {/* Bright center */}
+      <motion.div
+        className="absolute inset-[10%] rounded-full"
+        style={{
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${0.28 + bass * 0.2}) 0%, 
+            hsl(var(--primary) / 0.1) 50%,
+            transparent 70%)`,
+          filter: `blur(${22 + bass * 16}px)`,
+        }}
+        animate={{
+          scale: [1, 1.1 + bass * 0.08, 1],
+        }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+CrystalShimmer.displayName = 'CrystalShimmer';
+
+// Animation 10: Ocean Depth - Deep water light effect
+const OceanDepth = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [wave, setWave] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWave(w => (w + 1.5) % 100);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      {/* Caustic light patterns */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute inset-[-30%]"
+          style={{
+            background: `radial-gradient(ellipse ${80 + Math.sin(wave * 0.1 + i * 2) * 30}% ${70 + Math.cos(wave * 0.12 + i) * 25}% at ${50 + Math.sin(wave * 0.08 + i * 3) * 20}% ${40 + Math.cos(wave * 0.07 + i * 2) * 15}%, 
+              hsl(var(--primary) / ${0.15 + (i === 0 ? bass : mid) * 0.12}) 0%,
+              transparent 60%)`,
+            filter: `blur(${40 + i * 12}px)`,
+          }}
+          animate={{
+            scale: [1, 1.04 + bass * 0.03, 1],
+          }}
+          transition={{ duration: 0.45, ease: 'easeInOut' }}
+        />
+      ))}
+      
+      {/* Light rays from above */}
+      <motion.div
+        className="absolute inset-[-20%]"
+        style={{
+          background: `linear-gradient(${175 + Math.sin(wave * 0.05) * 10}deg, 
+            hsl(var(--primary) / ${0.1 + high * 0.08}) 0%,
+            transparent 40%)`,
+          filter: 'blur(35px)',
+        }}
+        animate={{
+          opacity: [0.5, 0.9, 0.5],
+        }}
+        transition={{ duration: 0.6, ease: 'easeInOut' }}
+      />
+      
+      {/* Deep glow */}
+      <motion.div
+        className="absolute inset-[5%] rounded-full"
+        style={{
+          background: `radial-gradient(circle at 50% 60%, 
+            hsl(var(--primary) / ${0.22 + bass * 0.18}) 0%, 
+            transparent 65%)`,
+          filter: `blur(${28 + bass * 18}px)`,
+        }}
+        animate={{
+          scale: [1, 1.1 + bass * 0.08, 1],
+        }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+OceanDepth.displayName = 'OceanDepth';
+
+// Animation 11: Ember Glow - Warm ember pulses
+const EmberGlow = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  return (
+    <>
+      {/* Warm gradient layers */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            inset: `${-10 - i * 15}%`,
+            background: `radial-gradient(circle, 
+              hsl(var(--primary) / ${0.18 - i * 0.04 + bass * 0.1}) 0%,
+              hsl(var(--primary) / ${0.08 - i * 0.02}) 50%,
+              transparent 70%)`,
+            filter: `blur(${35 + i * 15}px)`,
+          }}
+          animate={{
+            scale: [1, 1.06 + bass * 0.05 + i * 0.01, 1],
+            opacity: [0.6, 1, 0.6],
+          }}
+          transition={{ 
+            duration: 0.4, 
+            ease: 'easeInOut',
             delay: i * 0.08,
           }}
         />
       ))}
-
-      {/* Core glow */}
+      
+      {/* Flickering core */}
       <motion.div
-        className="absolute inset-[15%] rounded-full"
+        className="absolute inset-[0%] rounded-full"
         style={{
           background: `radial-gradient(circle, 
-            hsl(var(--primary) / ${0.7 + bass * 0.3}) 0%, 
-            hsl(var(--primary) / 0.2) 50%, 
-            transparent 70%)`,
-          filter: `blur(${10 + bass * 20}px)`,
+            hsl(var(--primary) / ${0.35 + bass * 0.25}) 0%, 
+            hsl(var(--primary) / 0.12) 45%,
+            transparent 65%)`,
+          filter: `blur(${25 + bass * 18}px)`,
         }}
         animate={{
-          scale: [1, 1.4 + bass * 0.5, 1],
+          scale: [1, 1.12 + bass * 0.1, 1.02, 1.08 + mid * 0.06, 1],
+          opacity: [0.8, 1, 0.85, 1, 0.8],
         }}
-        transition={{ duration: 0.12, repeat: Infinity }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
       />
     </>
   );
 });
-NebulaSwirl.displayName = 'NebulaSwirl';
+EmberGlow.displayName = 'EmberGlow';
 
-// Animation 5: Waveform Pulse
-const WaveformPulse = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
-  const bars = useMemo(() => Array.from({ length: 32 }, (_, i) => ({
-    id: i,
-    angle: (i * 11.25),
-  })), []);
-
-  return (
-    <>
-      {/* Radial waveform bars */}
-      {bars.map((bar) => {
-        const freq = bar.id % 4 === 0 ? bass : bar.id % 4 === 1 ? mid : bar.id % 4 === 2 ? high : (bass + mid) / 2;
-        const height = 30 + freq * 100;
-        
-        return (
-          <motion.div
-            key={bar.id}
-            className="absolute left-1/2 top-1/2 origin-bottom"
-            style={{
-              width: '4px',
-              height: `${height}px`,
-              background: `linear-gradient(to top, 
-                hsl(var(--primary)) 0%, 
-                hsl(var(--primary) / 0.6) 50%, 
-                hsl(var(--primary) / 0.2) 100%)`,
-              transform: `translate(-50%, -100%) rotate(${bar.angle}deg) translateY(-60px)`,
-              borderRadius: '2px',
-              boxShadow: `0 0 ${8 + freq * 15}px hsl(var(--primary) / 0.7)`,
-            }}
-            animate={{
-              scaleY: [0.4, 1, 0.4],
-              opacity: [0.5, 1, 0.5],
-            }}
-            transition={{
-              duration: 0.1,
-              repeat: Infinity,
-              delay: bar.id * 0.01,
-            }}
-          />
-        );
-      })}
-
-      {/* Center pulse */}
-      <motion.div
-        className="absolute inset-[30%] rounded-full"
-        style={{
-          background: `radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)`,
-          boxShadow: `0 0 ${40 + bass * 60}px hsl(var(--primary) / 0.8)`,
-        }}
-        animate={{
-          scale: [0.8, 1.3 + bass * 0.4, 0.8],
-        }}
-        transition={{ duration: 0.12, repeat: Infinity }}
-      />
-
-      {/* Outer ring */}
-      <motion.div
-        className="absolute inset-[-25%] rounded-full border-2"
-        style={{
-          borderColor: `hsl(var(--primary) / 0.5)`,
-        }}
-        animate={{
-          scale: [1, 1.1 + mid * 0.2, 1],
-          opacity: [0.5, 0.8, 0.5],
-        }}
-        transition={{ duration: 0.15, repeat: Infinity }}
-      />
-    </>
-  );
-});
-WaveformPulse.displayName = 'WaveformPulse';
-
-// Animation 6: Digital Glitch Matrix
-const DigitalGlitchMatrix = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
-  const [glitchOffset, setGlitchOffset] = useState({ x: 0, y: 0 });
+// Animation 12: Frost Crystal - Icy crystalline patterns
+const FrostCrystal = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [frost, setFrost] = useState(0);
   
   useEffect(() => {
     const interval = setInterval(() => {
-      if (bass > 0.5) {
-        setGlitchOffset({
-          x: (Math.random() - 0.5) * 20 * bass,
-          y: (Math.random() - 0.5) * 20 * bass,
-        });
-      } else {
-        setGlitchOffset({ x: 0, y: 0 });
-      }
-    }, 50);
+      setFrost(f => (f + 1) % 360);
+    }, 80);
     return () => clearInterval(interval);
-  }, [bass]);
-
-  const lines = useMemo(() => Array.from({ length: 20 }, (_, i) => ({
-    id: i,
-    y: i * 5,
-  })), []);
+  }, []);
 
   return (
     <>
-      {/* Scan lines */}
-      {lines.map((line) => (
+      {/* Ice crystal rays */}
+      {[0, 1, 2, 3, 4, 5].map((i) => (
         <motion.div
-          key={line.id}
-          className="absolute left-0 right-0 h-[2px]"
+          key={i}
+          className="absolute left-1/2 top-1/2 origin-left"
           style={{
-            top: `${line.y}%`,
+            width: `${60 + bass * 30}%`,
+            height: '2px',
             background: `linear-gradient(90deg, 
-              transparent 0%, 
-              hsl(var(--primary) / ${0.1 + (line.id % 3 === 0 ? bass : mid) * 0.4}) 50%, 
+              hsl(var(--primary) / ${0.2 + (i % 2 === 0 ? bass : mid) * 0.15}) 0%,
+              hsl(var(--primary) / 0.05) 70%,
               transparent 100%)`,
+            transform: `rotate(${frost + i * 60}deg)`,
+            filter: 'blur(3px)',
           }}
           animate={{
-            opacity: [0.2, 0.8, 0.2],
-            scaleX: [0.8, 1.1 + high * 0.2, 0.8],
+            opacity: [0.4, 0.9, 0.4],
+            scaleX: [0.8, 1 + bass * 0.15, 0.8],
           }}
-          transition={{
-            duration: 0.15,
-            repeat: Infinity,
-            delay: line.id * 0.02,
-          }}
+          transition={{ duration: 0.5, delay: i * 0.05 }}
         />
       ))}
-
-      {/* Glitch boxes */}
-      {[0, 1, 2].map((i) => (
-        <motion.div
-          key={`glitch-${i}`}
-          className="absolute"
-          style={{
-            left: `${20 + i * 25}%`,
-            top: `${30 + i * 15}%`,
-            width: `${30 + bass * 20}%`,
-            height: `${15 + mid * 10}%`,
-            background: `hsl(var(--primary) / ${0.2 + bass * 0.3})`,
-            mixBlendMode: 'screen',
-          }}
-          animate={{
-            x: glitchOffset.x * (i + 1) * 0.5,
-            y: glitchOffset.y * (i + 1) * 0.5,
-            opacity: [0.3, 0.8, 0.3],
-          }}
-          transition={{ duration: 0.08 }}
-        />
-      ))}
-
-      {/* RGB split effect */}
+      
+      {/* Soft halo */}
       <motion.div
-        className="absolute inset-0"
+        className="absolute inset-[-25%] rounded-full"
         style={{
-          background: `linear-gradient(45deg, 
-            hsla(0, 100%, 50%, ${0.05 + bass * 0.1}) 0%, 
-            transparent 33%, 
-            hsla(120, 100%, 50%, ${0.05 + mid * 0.1}) 66%, 
-            hsla(240, 100%, 50%, ${0.05 + high * 0.1}) 100%)`,
-          mixBlendMode: 'overlay',
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${0.15 + bass * 0.12}) 0%,
+            hsl(var(--primary) / 0.04) 50%,
+            transparent 70%)`,
+          filter: `blur(${40 + bass * 20}px)`,
         }}
         animate={{
-          x: [0, glitchOffset.x * 2, 0],
+          scale: [1, 1.08 + bass * 0.06, 1],
         }}
-        transition={{ duration: 0.1 }}
-      />
-
-      {/* Center core */}
-      <motion.div
-        className="absolute inset-[20%] rounded-xl"
-        style={{
-          border: `2px solid hsl(var(--primary) / ${0.6 + bass * 0.4})`,
-          boxShadow: `
-            0 0 ${20 + bass * 40}px hsl(var(--primary) / 0.5),
-            inset 0 0 ${15 + mid * 30}px hsl(var(--primary) / 0.3)`,
-        }}
-        animate={{
-          scale: [1, 1.05 + bass * 0.1, 1],
-        }}
-        transition={{ duration: 0.1, repeat: Infinity }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
       />
     </>
   );
 });
-DigitalGlitchMatrix.displayName = 'DigitalGlitchMatrix';
+FrostCrystal.displayName = 'FrostCrystal';
 
-// Animation 7: Fire Aura
-const FireAura = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
-  const flames = useMemo(() => Array.from({ length: 24 }, (_, i) => ({
-    id: i,
-    angle: i * 15,
-    height: 60 + Math.random() * 40,
-    delay: i * 0.03,
-  })), []);
+// Animation 13: Solar Flare - Sun-like energy bursts
+const SolarFlare = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  return (
+    <>
+      {/* Corona layers */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            inset: `${-20 - i * 12}%`,
+            background: `radial-gradient(circle, 
+              transparent 30%,
+              hsl(var(--primary) / ${0.1 - i * 0.02 + bass * 0.08}) 50%,
+              hsl(var(--primary) / ${0.05 - i * 0.01}) 70%,
+              transparent 85%)`,
+            filter: `blur(${30 + i * 15}px)`,
+          }}
+          animate={{
+            scale: [1, 1.08 + bass * 0.06 + i * 0.02, 1],
+          }}
+          transition={{ 
+            duration: 0.4, 
+            ease: 'easeOut',
+            delay: i * 0.06,
+          }}
+        />
+      ))}
+      
+      {/* Bright core */}
+      <motion.div
+        className="absolute inset-[-5%] rounded-full"
+        style={{
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${0.4 + bass * 0.25}) 0%, 
+            hsl(var(--primary) / 0.15) 40%,
+            transparent 60%)`,
+          filter: `blur(${22 + bass * 18}px)`,
+        }}
+        animate={{
+          scale: [1, 1.15 + bass * 0.1, 1],
+        }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+SolarFlare.displayName = 'SolarFlare';
+
+// Animation 14: Smoke Drift - Ethereal smoke wisps
+const SmokeDrift = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [drift, setDrift] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDrift(d => (d + 0.8) % 100);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
-      {/* Fire flames */}
-      {flames.map((flame) => {
-        const freq = flame.id % 3 === 0 ? bass : flame.id % 3 === 1 ? mid : high;
-        
-        return (
-          <motion.div
-            key={flame.id}
-            className="absolute left-1/2 top-1/2 origin-bottom"
-            style={{
-              width: `${8 + freq * 12}px`,
-              height: `${flame.height + freq * 80}px`,
-              background: `linear-gradient(to top, 
-                hsl(var(--primary)) 0%, 
-                hsl(var(--primary) / 0.7) 40%, 
-                hsl(var(--primary) / 0.3) 70%, 
-                transparent 100%)`,
-              transform: `translate(-50%, -100%) rotate(${flame.angle}deg) translateY(-50px)`,
-              borderRadius: '50% 50% 20% 20%',
-              filter: `blur(${3 + freq * 5}px)`,
-            }}
-            animate={{
-              scaleY: [0.6, 1 + freq * 0.6, 0.6],
-              scaleX: [0.8, 1.2, 0.8],
-              opacity: [0.6, 1, 0.6],
-            }}
-            transition={{
-              duration: 0.12,
-              repeat: Infinity,
-              delay: flame.delay,
-            }}
-          />
-        );
-      })}
+      {/* Drifting smoke wisps */}
+      {[0, 1, 2, 3].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute inset-[-40%]"
+          style={{
+            background: `radial-gradient(ellipse ${90 + Math.sin(drift * 0.08 + i * 1.5) * 30}% ${70 + Math.cos(drift * 0.1 + i) * 20}% at ${40 + Math.sin(drift * 0.06 + i * 2.5) * 25}% ${55 + Math.cos(drift * 0.05 + i * 1.8) * 18}%, 
+              hsl(var(--primary) / ${0.1 + (i % 2 === 0 ? bass : mid) * 0.08}) 0%,
+              transparent 60%)`,
+            filter: `blur(${45 + i * 12}px)`,
+          }}
+          animate={{
+            scale: [1, 1.03 + bass * 0.02, 1],
+          }}
+          transition={{ duration: 0.5, ease: 'easeInOut' }}
+        />
+      ))}
+      
+      {/* Soft core */}
+      <motion.div
+        className="absolute inset-[5%] rounded-full"
+        style={{
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${0.18 + bass * 0.14}) 0%, 
+            transparent 60%)`,
+          filter: `blur(${28 + bass * 18}px)`,
+        }}
+        animate={{
+          scale: [1, 1.1 + bass * 0.08, 1],
+        }}
+        transition={{ duration: 0.32, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+SmokeDrift.displayName = 'SmokeDrift';
 
-      {/* Inner heat glow */}
+// Animation 15: Galaxy Spiral - Rotating galaxy arms
+const GalaxySpiral = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [rotation, setRotation] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotation(r => (r + 0.6) % 360);
+    }, 40);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      {/* Spiral arms */}
+      {[0, 1].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute inset-[-35%]"
+          style={{
+            background: `conic-gradient(from ${rotation + i * 180}deg at 50% 50%,
+              transparent 0deg,
+              hsl(var(--primary) / ${0.06 + bass * 0.05}) 20deg,
+              hsl(var(--primary) / ${0.1 + mid * 0.08}) 40deg,
+              hsl(var(--primary) / ${0.06 + bass * 0.05}) 60deg,
+              transparent 80deg,
+              transparent 180deg,
+              hsl(var(--primary) / ${0.05 + high * 0.04}) 200deg,
+              hsl(var(--primary) / ${0.08 + mid * 0.06}) 220deg,
+              hsl(var(--primary) / ${0.05 + high * 0.04}) 240deg,
+              transparent 260deg)`,
+            filter: `blur(${40 + i * 10}px)`,
+          }}
+          animate={{
+            scale: [1, 1.04 + bass * 0.03, 1],
+          }}
+          transition={{ duration: 0.4, ease: 'easeInOut' }}
+        />
+      ))}
+      
+      {/* Galactic core */}
       <motion.div
         className="absolute inset-[10%] rounded-full"
         style={{
           background: `radial-gradient(circle, 
-            hsl(var(--primary) / ${0.9 + bass * 0.1}) 0%, 
-            hsl(var(--primary) / 0.4) 50%, 
+            hsl(var(--primary) / ${0.3 + bass * 0.2}) 0%, 
+            hsl(var(--primary) / 0.1) 50%,
             transparent 70%)`,
-          filter: `blur(${15 + bass * 25}px)`,
+          filter: `blur(${25 + bass * 18}px)`,
         }}
         animate={{
-          scale: [1, 1.3 + bass * 0.4, 1],
+          scale: [1, 1.12 + bass * 0.08, 1],
         }}
-        transition={{ duration: 0.1, repeat: Infinity }}
-      />
-
-      {/* Heat distortion ring */}
-      <motion.div
-        className="absolute inset-[-15%] rounded-full"
-        style={{
-          border: `3px solid hsl(var(--primary) / ${0.4 + mid * 0.3})`,
-          boxShadow: `0 0 ${40 + bass * 60}px hsl(var(--primary) / 0.6)`,
-        }}
-        animate={{
-          scale: [1, 1.15 + bass * 0.2, 1],
-          opacity: [0.5, 0.9, 0.5],
-        }}
-        transition={{ duration: 0.15, repeat: Infinity }}
+        transition={{ duration: 0.28, ease: 'easeOut' }}
       />
     </>
   );
 });
-FireAura.displayName = 'FireAura';
+GalaxySpiral.displayName = 'GalaxySpiral';
 
-// Animation 8: Cosmic Rings
-const CosmicRings = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
-  const rings = useMemo(() => Array.from({ length: 5 }, (_, i) => ({
-    id: i,
-    radius: 30 + i * 20,
-    rotation: i * 36,
-    tilt: 60 + i * 5,
-  })), []);
-
+// Animation 16: Moonlight Haze - Soft lunar glow
+const MoonlightHaze = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
   return (
     <>
-      {/* 3D tilted rings */}
-      <div 
-        className="absolute inset-[-20%]"
-        style={{ perspective: '600px', perspectiveOrigin: 'center' }}
-      >
-        {rings.map((ring) => {
-          const freq = ring.id % 3 === 0 ? bass : ring.id % 3 === 1 ? mid : high;
-          
-          return (
-            <motion.div
-              key={ring.id}
-              className="absolute inset-0 rounded-full border-2"
-              style={{
-                borderColor: `hsl(var(--primary) / ${0.5 + freq * 0.5})`,
-                boxShadow: `0 0 ${15 + freq * 25}px hsl(var(--primary) / ${0.4 + freq * 0.3})`,
-                transform: `rotateX(${ring.tilt}deg) rotateZ(${ring.rotation}deg) scale(${0.5 + ring.id * 0.12})`,
-              }}
-              animate={{
-                rotateZ: [ring.rotation, ring.rotation + 360],
-                scale: [0.5 + ring.id * 0.12, 0.55 + ring.id * 0.12 + freq * 0.15, 0.5 + ring.id * 0.12],
-              }}
-              transition={{
-                rotateZ: { duration: 6 + ring.id, repeat: Infinity, ease: 'linear' },
-                scale: { duration: 0.12, repeat: Infinity },
-              }}
-            />
-          );
-        })}
-      </div>
-
-      {/* Orbiting particles */}
-      {Array.from({ length: 8 }, (_, i) => (
+      {/* Soft lunar halo layers */}
+      {[0, 1, 2, 3, 4].map((i) => (
         <motion.div
-          key={`orbit-${i}`}
-          className="absolute w-3 h-3 rounded-full"
+          key={i}
+          className="absolute rounded-full"
           style={{
-            left: '50%',
-            top: '50%',
-            background: `radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)`,
-            boxShadow: `0 0 10px hsl(var(--primary))`,
+            inset: `${-8 - i * 10}%`,
+            background: `radial-gradient(circle, 
+              transparent ${40 + i * 5}%,
+              hsl(var(--primary) / ${0.06 - i * 0.01 + bass * 0.04}) ${55 + i * 5}%,
+              transparent ${70 + i * 5}%)`,
+            filter: `blur(${18 + i * 8}px)`,
           }}
           animate={{
-            x: Math.cos((i * 45 + Date.now() * 0.002) * Math.PI / 180) * (100 + bass * 40) - 6,
-            y: Math.sin((i * 45 + Date.now() * 0.002) * Math.PI / 180) * (100 + bass * 40) - 6,
-            scale: [1, 1.5 + high * 0.5, 1],
+            scale: [1, 1.03 + bass * 0.02, 1],
+            opacity: [0.6, 1, 0.6],
           }}
-          transition={{
-            x: { duration: 4 + i * 0.5, repeat: Infinity, ease: 'linear' },
-            y: { duration: 4 + i * 0.5, repeat: Infinity, ease: 'linear' },
-            scale: { duration: 0.15, repeat: Infinity },
+          transition={{ 
+            duration: 0.5, 
+            ease: 'easeInOut',
+            delay: i * 0.04,
           }}
         />
       ))}
-
-      {/* Core glow */}
+      
+      {/* Bright moon glow */}
       <motion.div
-        className="absolute inset-[25%] rounded-full"
+        className="absolute inset-[-5%] rounded-full"
         style={{
           background: `radial-gradient(circle, 
-            hsl(var(--primary)) 0%, 
-            hsl(var(--primary) / 0.5) 40%, 
+            hsl(var(--primary) / ${0.25 + bass * 0.18}) 0%, 
+            hsl(var(--primary) / 0.08) 50%,
             transparent 70%)`,
-          boxShadow: `0 0 ${50 + bass * 70}px hsl(var(--primary) / 0.7)`,
+          filter: `blur(${28 + bass * 18}px)`,
         }}
         animate={{
-          scale: [1, 1.4 + bass * 0.5, 1],
+          scale: [1, 1.1 + bass * 0.08, 1],
         }}
-        transition={{ duration: 0.1, repeat: Infinity }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
       />
     </>
   );
 });
-CosmicRings.displayName = 'CosmicRings';
+MoonlightHaze.displayName = 'MoonlightHaze';
+
+// Animation 17: Thunder Pulse - Soft electrical pulses
+const ThunderPulse = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [flash, setFlash] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFlash(f => (f + 1) % 60);
+    }, 80);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isFlashing = flash < 3 || (flash > 20 && flash < 23);
+
+  return (
+    <>
+      {/* Ambient storm clouds */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute inset-[-35%]"
+          style={{
+            background: `radial-gradient(ellipse 90% 70% at ${45 + i * 10}% ${50 + i * 5}%, 
+              hsl(var(--primary) / ${0.1 + (i === 0 ? bass : mid) * 0.08}) 0%,
+              transparent 60%)`,
+            filter: `blur(${45 + i * 12}px)`,
+          }}
+          animate={{
+            scale: [1, 1.04 + bass * 0.03, 1],
+          }}
+          transition={{ duration: 0.45, ease: 'easeInOut' }}
+        />
+      ))}
+      
+      {/* Lightning flash */}
+      <motion.div
+        className="absolute inset-[-20%] rounded-full"
+        style={{
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${isFlashing ? 0.4 + bass * 0.3 : 0.15 + bass * 0.1}) 0%,
+            transparent 60%)`,
+          filter: `blur(${30 + bass * 20}px)`,
+        }}
+        animate={{
+          scale: isFlashing ? [1, 1.2 + bass * 0.15, 1] : [1, 1.08 + bass * 0.06, 1],
+        }}
+        transition={{ duration: isFlashing ? 0.1 : 0.35, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+ThunderPulse.displayName = 'ThunderPulse';
+
+// Animation 18: Zen Flow - Minimal, peaceful movement
+const ZenFlow = memo(({ bass, mid, high }: { bass: number; mid: number; high: number }) => {
+  const [flow, setFlow] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFlow(f => (f + 0.5) % 100);
+    }, 60);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      {/* Flowing zen circles */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            inset: `${-15 - i * 12}%`,
+            border: `1px solid hsl(var(--primary) / ${0.08 + (i === 0 ? bass : i === 1 ? mid : high) * 0.06})`,
+            filter: `blur(${6 + i * 4}px)`,
+          }}
+          animate={{
+            scale: [1, 1.03 + bass * 0.02, 1],
+            opacity: [0.4, 0.8, 0.4],
+          }}
+          transition={{ 
+            duration: 0.6 + i * 0.15, 
+            ease: 'easeInOut',
+            delay: i * 0.1,
+          }}
+        />
+      ))}
+      
+      {/* Soft ambient glow */}
+      <motion.div
+        className="absolute inset-[-20%]"
+        style={{
+          background: `radial-gradient(ellipse 80% 80% at 50% ${48 + Math.sin(flow * 0.1) * 5}%, 
+            hsl(var(--primary) / ${0.12 + bass * 0.1}) 0%,
+            transparent 60%)`,
+          filter: `blur(${40 + bass * 18}px)`,
+        }}
+        animate={{
+          scale: [1, 1.05 + bass * 0.04, 1],
+        }}
+        transition={{ duration: 0.45, ease: 'easeInOut' }}
+      />
+      
+      {/* Center breath */}
+      <motion.div
+        className="absolute inset-[8%] rounded-full"
+        style={{
+          background: `radial-gradient(circle, 
+            hsl(var(--primary) / ${0.18 + bass * 0.14}) 0%, 
+            transparent 65%)`,
+          filter: `blur(${25 + bass * 16}px)`,
+        }}
+        animate={{
+          scale: [1, 1.1 + bass * 0.08, 1],
+        }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+      />
+    </>
+  );
+});
+ZenFlow.displayName = 'ZenFlow';
 
 const AlbumArtAnimations = memo(({ isPlaying, bassFrequency, midFrequency, highFrequency, songId }: AlbumArtAnimationsProps) => {
   const animationType = useMemo(() => getAnimationType(songId), [songId]);
@@ -677,23 +1053,43 @@ const AlbumArtAnimations = memo(({ isPlaying, bassFrequency, midFrequency, highF
 
   switch (animationType) {
     case 0:
-      return <ElectricPulseStorm {...props} />;
+      return <LiquidGlassFlow {...props} />;
     case 1:
-      return <LiquidMorphingBlob {...props} />;
+      return <BreathingAura {...props} />;
     case 2:
-      return <ParticleExplosion {...props} />;
+      return <AuroraWaves {...props} />;
     case 3:
-      return <NebulaSwirl {...props} />;
+      return <DepthPulse {...props} />;
     case 4:
-      return <WaveformPulse {...props} />;
+      return <SilkRipple {...props} />;
     case 5:
-      return <DigitalGlitchMatrix {...props} />;
+      return <VinylGlow {...props} />;
     case 6:
-      return <FireAura {...props} />;
+      return <PrismRefraction {...props} />;
     case 7:
-      return <CosmicRings {...props} />;
+      return <NebulaCloud {...props} />;
+    case 8:
+      return <CrystalShimmer {...props} />;
+    case 9:
+      return <OceanDepth {...props} />;
+    case 10:
+      return <EmberGlow {...props} />;
+    case 11:
+      return <FrostCrystal {...props} />;
+    case 12:
+      return <SolarFlare {...props} />;
+    case 13:
+      return <SmokeDrift {...props} />;
+    case 14:
+      return <GalaxySpiral {...props} />;
+    case 15:
+      return <MoonlightHaze {...props} />;
+    case 16:
+      return <ThunderPulse {...props} />;
+    case 17:
+      return <ZenFlow {...props} />;
     default:
-      return <ElectricPulseStorm {...props} />;
+      return <LiquidGlassFlow {...props} />;
   }
 });
 
