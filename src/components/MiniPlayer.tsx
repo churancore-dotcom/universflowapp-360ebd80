@@ -1,5 +1,5 @@
-import { memo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { memo, useCallback, useState } from 'react';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Play, Pause, SkipForward, X } from 'lucide-react';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { useAudioVisualizer } from '@/hooks/useAudioVisualizer';
@@ -40,6 +40,10 @@ const NowPlayingBars = memo(function NowPlayingBars({ isPlaying }: { isPlaying: 
   );
 });
 
+// Swipe thresholds
+const SWIPE_UP_THRESHOLD = -50;
+const SWIPE_HORIZONTAL_THRESHOLD = 80;
+
 const MiniPlayer = memo(function MiniPlayer() {
   const {
     currentSong,
@@ -49,9 +53,13 @@ const MiniPlayer = memo(function MiniPlayer() {
     audioElement,
     togglePlay,
     nextSong,
+    prevSong,
     stopSong,
     setExpanded
   } = usePlayer();
+
+  const [dragX, setDragX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Real audio frequency visualization
   const { bassFrequency } = useAudioVisualizer(audioElement, isPlaying);
@@ -66,8 +74,8 @@ const MiniPlayer = memo(function MiniPlayer() {
     }
   }, [togglePlay]);
 
-  const handleNextSong = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleNextSong = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
     triggerHaptic('impactLight');
     try {
       nextSong();
@@ -75,6 +83,15 @@ const MiniPlayer = memo(function MiniPlayer() {
       console.error('Error skipping song:', error);
     }
   }, [nextSong]);
+
+  const handlePrevSong = useCallback(() => {
+    triggerHaptic('impactLight');
+    try {
+      prevSong();
+    } catch (error) {
+      console.error('Error going to previous song:', error);
+    }
+  }, [prevSong]);
 
   const handleStopSong = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,13 +104,45 @@ const MiniPlayer = memo(function MiniPlayer() {
   }, [stopSong]);
 
   const handleExpand = useCallback(() => {
-    triggerHaptic('impactLight');
-    try {
-      setExpanded(true);
-    } catch (error) {
-      console.error('Error expanding player:', error);
+    if (!isDragging) {
+      triggerHaptic('impactLight');
+      try {
+        setExpanded(true);
+      } catch (error) {
+        console.error('Error expanding player:', error);
+      }
     }
-  }, [setExpanded]);
+  }, [setExpanded, isDragging]);
+
+  // Handle swipe gestures
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
+  const handleDrag = useCallback((_: any, info: PanInfo) => {
+    setDragX(info.offset.x);
+  }, []);
+
+  const handleDragEnd = useCallback((_: any, info: PanInfo) => {
+    const { offset, velocity } = info;
+    
+    // Swipe UP to expand fullscreen
+    if (offset.y < SWIPE_UP_THRESHOLD || velocity.y < -300) {
+      triggerHaptic('impactMedium');
+      setExpanded(true);
+    }
+    // Swipe LEFT to skip to next track
+    else if (offset.x < -SWIPE_HORIZONTAL_THRESHOLD || velocity.x < -500) {
+      handleNextSong();
+    }
+    // Swipe RIGHT to go to previous track
+    else if (offset.x > SWIPE_HORIZONTAL_THRESHOLD || velocity.x > 500) {
+      handlePrevSong();
+    }
+
+    setDragX(0);
+    setTimeout(() => setIsDragging(false), 100);
+  }, [setExpanded, handleNextSong, handlePrevSong]);
 
   if (!currentSong) return null;
 
@@ -104,6 +153,11 @@ const MiniPlayer = memo(function MiniPlayer() {
   // Real-time glow intensity based on bass
   const glowIntensity = bassFrequency * 0.6;
 
+  // Visual feedback for swipe direction
+  const swipeOpacity = Math.min(Math.abs(dragX) / 150, 0.5);
+  const isSwipingLeft = dragX < -30;
+  const isSwipingRight = dragX > 30;
+
   return (
     <AnimatePresence>
       <motion.div
@@ -113,17 +167,52 @@ const MiniPlayer = memo(function MiniPlayer() {
         exit={{ y: 100, opacity: 0, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 400, damping: 28 }}
       >
-        {/* Spotify-style sticky player */}
+        {/* Spotify-style sticky player with swipe gestures */}
         <motion.div
-          className="rounded-xl overflow-hidden bg-muted/95"
+          className="rounded-xl overflow-hidden bg-muted/95 relative touch-manipulation"
           style={{
             backdropFilter: 'blur(60px) saturate(200%)',
             WebkitBackdropFilter: 'blur(60px) saturate(200%)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2)',
           }}
-          whileTap={{ scale: 0.99 }}
+          drag
+          dragDirectionLock
+          dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+          dragElastic={{ left: 0.3, right: 0.3, top: 0.2, bottom: 0 }}
+          onDragStart={handleDragStart}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
           onClick={handleExpand}
+          whileTap={{ scale: isDragging ? 1 : 0.99 }}
         >
+          {/* Swipe hint indicators */}
+          <AnimatePresence>
+            {isSwipingLeft && (
+              <motion.div
+                className="absolute inset-y-0 right-2 flex items-center z-20 pointer-events-none"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: swipeOpacity, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+              >
+                <div className="bg-primary/80 rounded-full px-3 py-1.5 text-xs font-semibold text-white">
+                  Next →
+                </div>
+              </motion.div>
+            )}
+            {isSwipingRight && (
+              <motion.div
+                className="absolute inset-y-0 left-2 flex items-center z-20 pointer-events-none"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: swipeOpacity, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+              >
+                <div className="bg-primary/80 rounded-full px-3 py-1.5 text-xs font-semibold text-white">
+                  ← Prev
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Progress bar - thin red line */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/10 overflow-hidden rounded-t-xl">
             <motion.div
