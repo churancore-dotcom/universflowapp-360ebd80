@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_now_playing_description">Shows the currently playing song with playback controls</string>
+    <string name="widget_favorites_description">Quick access to your favorite songs</string>
+    <string name="widget_quick_actions_description">Quick access to search, shuffle, and more</string>
+</resources>
