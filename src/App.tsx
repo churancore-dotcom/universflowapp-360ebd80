@@ -127,12 +127,13 @@ const AnimatedRoutes = () => {
 };
 
 const PrerollAdWrapper = () => {
-  const { showPrerollAd, onPrerollAdComplete } = usePlayer();
+  const { showPrerollAd, onPrerollAdComplete, adType } = usePlayer();
   return (
     <PrerollAd 
       isOpen={showPrerollAd} 
       onComplete={onPrerollAdComplete}
       onSkip={onPrerollAdComplete}
+      adType={adType}
     />
   );
 };

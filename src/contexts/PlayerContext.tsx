@@ -29,6 +29,7 @@ interface PlayerContextType {
   crossfadeDuration: number;
   audioElement: HTMLAudioElement | null;
   showPrerollAd: boolean;
+  adType: 'start' | 'end';
   playSong: (song: Song, offlineUrl?: string | null, songsQueue?: Song[]) => void;
   togglePlay: () => void;
   pause: () => void;
@@ -65,8 +66,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [crossfadeDuration, setCrossfadeDurationState] = useState(3);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [showPrerollAd, setShowPrerollAd] = useState(false);
-  const [pendingSong, setPendingSong] = useState<{ song: Song; offlineUrl?: string | null } | null>(null);
+  const [adType, setAdType] = useState<'start' | 'end'>('start');
+  const [pendingSong, setPendingSong] = useState<{ song: Song; offlineUrl?: string | null; songsQueue?: Song[] } | null>(null);
   const [songsPlayedSinceAd, setSongsPlayedSinceAd] = useState(0);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
   const AD_FREQUENCY = 3; // Show ad every 3 songs
   
   // Single audio element - simpler approach
@@ -75,6 +78,43 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const crossfadeIntervalRef = useRef<number | null>(null);
   const isCrossfading = useRef(false);
   const animationFrameRef = useRef<number | null>(null);
+
+  // Check premium status on mount
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsPremiumUser(false);
+          return;
+        }
+
+        const { data } = await supabase
+          .from('user_subscriptions')
+          .select('subscription_type, status, expires_at')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (data) {
+          const isExpired = data.expires_at && new Date(data.expires_at) < new Date();
+          const isPremium = data.subscription_type !== 'free' && data.status === 'active' && !isExpired;
+          setIsPremiumUser(isPremium);
+        } else {
+          setIsPremiumUser(false);
+        }
+      } catch {
+        setIsPremiumUser(false);
+      }
+    };
+    checkStatus();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkStatus();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Create audio element once
   useEffect(() => {
@@ -194,7 +234,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setDuration(audio.duration || 0);
     };
 
-    const handleEnded = () => {
+    const handleEnded = async () => {
       if (repeat === 'one') {
         audio.currentTime = 0;
         audio.play().catch(console.warn);
@@ -204,6 +244,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Move to next song
       const nextIdx = getNextIndex(currentIndex, queue.length, shuffle, repeat);
       if (nextIdx !== null) {
+        const nextSong = queue[nextIdx];
+        
+        // Check premium and show end-of-song ad for non-premium
+        if (!isPremiumUser && songsPlayedSinceAd >= AD_FREQUENCY - 1) {
+          setPendingSong({ song: nextSong, offlineUrl: null, songsQueue: queue });
+          setAdType('end');
+          setShowPrerollAd(true);
+          setSongsPlayedSinceAd(0);
+          return;
+        }
+        
+        setSongsPlayedSinceAd(prev => prev + 1);
         playSongAtIndex(nextIdx, queue);
       } else {
         setIsPlaying(false);
@@ -244,7 +296,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [currentIndex, queue, shuffle, repeat, crossfade, crossfadeDuration, getNextIndex, playSongAtIndex]);
+  }, [currentIndex, queue, shuffle, repeat, crossfade, crossfadeDuration, getNextIndex, playSongAtIndex, isPremiumUser, songsPlayedSinceAd]);
 
   // Crossfade implementation
   const startCrossfade = useCallback(() => {
@@ -367,30 +419,62 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [volume, queue]);
 
-  const playSong = useCallback(async (song: Song, offlineUrl?: string | null, songsQueue?: Song[]) => {
-    // Check if we should show a pre-roll ad (every AD_FREQUENCY songs)
-    const shouldShowAd = songsPlayedSinceAd >= AD_FREQUENCY - 1;
-    
-    if (shouldShowAd) {
-      // Store pending song and show ad
-      setPendingSong({ song, offlineUrl });
-      // Store queue for after ad
-      if (songsQueue) {
-        setQueueState(songsQueue);
+  // Check premium status from database
+  const checkPremiumStatus = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsPremiumUser(false);
+        return false;
       }
-      setShowPrerollAd(true);
-      setSongsPlayedSinceAd(0);
-    } else {
-      // Play directly
-      setSongsPlayedSinceAd(prev => prev + 1);
-      await playActualSong(song, offlineUrl, songsQueue);
+
+      const { data } = await supabase
+        .from('user_subscriptions')
+        .select('subscription_type, status, expires_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        const isExpired = data.expires_at && new Date(data.expires_at) < new Date();
+        const isPremium = data.subscription_type !== 'free' && data.status === 'active' && !isExpired;
+        setIsPremiumUser(isPremium);
+        return isPremium;
+      }
+      setIsPremiumUser(false);
+      return false;
+    } catch {
+      setIsPremiumUser(false);
+      return false;
     }
-  }, [songsPlayedSinceAd, playActualSong]);
+  }, []);
+
+  const playSong = useCallback(async (song: Song, offlineUrl?: string | null, songsQueue?: Song[]) => {
+    // Check premium status before showing ad
+    const isPremium = await checkPremiumStatus();
+    
+    // Only show ads to non-premium users
+    if (!isPremium) {
+      const shouldShowAd = songsPlayedSinceAd >= AD_FREQUENCY - 1;
+      
+      if (shouldShowAd) {
+        // Store pending song and show ad
+        setPendingSong({ song, offlineUrl, songsQueue });
+        setAdType('start');
+        setShowPrerollAd(true);
+        setSongsPlayedSinceAd(0);
+        return;
+      }
+    }
+    
+    // Play directly (premium or not ad time yet)
+    setSongsPlayedSinceAd(prev => prev + 1);
+    await playActualSong(song, offlineUrl, songsQueue);
+  }, [songsPlayedSinceAd, playActualSong, checkPremiumStatus]);
 
   const onPrerollAdComplete = useCallback(() => {
     setShowPrerollAd(false);
     if (pendingSong) {
-      playActualSong(pendingSong.song, pendingSong.offlineUrl);
+      playActualSong(pendingSong.song, pendingSong.offlineUrl, pendingSong.songsQueue);
       setPendingSong(null);
     }
   }, [pendingSong, playActualSong]);
@@ -608,6 +692,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       crossfadeDuration,
       audioElement,
       showPrerollAd,
+      adType,
       playSong,
       togglePlay,
       pause,
