@@ -7,6 +7,7 @@ import SongCard from '@/components/SongCard';
 import HorizontalSection from '@/components/HorizontalSection';
 import AllSongsSection from '@/components/AllSongsSection';
 import FeaturedArtistsSection from '@/components/FeaturedArtistsSection';
+import RecentlyPlayedSection from '@/components/RecentlyPlayedSection';
 import SleepTimerModal from '@/components/SleepTimerModal';
 import QueueDrawer from '@/components/QueueDrawer';
 import BottomNav from '@/components/BottomNav';
@@ -62,11 +63,6 @@ const Home = () => {
 
   const newReleases = useMemo(() => 
     songs.filter(s => (s as any).show_in_new_releases).slice(0, 10),
-    [songs]
-  );
-  
-  const trendingSongs = useMemo(() => 
-    songs.filter(s => (s as any).show_in_trending).slice(0, 10),
     [songs]
   );
 
@@ -206,20 +202,14 @@ const Home = () => {
             <EmptyState />
           ) : (
             <div className="space-y-1">
-              {/* New Releases - Fresh content first */}
+              {/* Recently Played - Quick access for returning users */}
+              <RecentlyPlayedSection compact />
+
+              {/* New Releases - Fresh content */}
               {newReleases.length > 0 && (
                 <HorizontalSection title="New Releases" subtitle="Fresh tracks" songs={newReleases}>
                   {newReleases.map((song, i) => (
                     <SongCard key={song.id} song={song} index={i} sectionSongs={newReleases} />
-                  ))}
-                </HorizontalSection>
-              )}
-
-              {/* Trending - What's hot now */}
-              {trendingSongs.length > 0 && (
-                <HorizontalSection title="Trending" subtitle="What's hot" songs={trendingSongs}>
-                  {trendingSongs.map((song, i) => (
-                    <SongCard key={song.id} song={song} index={i} sectionSongs={trendingSongs} />
                   ))}
                 </HorizontalSection>
               )}
