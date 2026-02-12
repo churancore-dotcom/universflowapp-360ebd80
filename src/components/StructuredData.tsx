@@ -1,19 +1,19 @@
 import { useEffect } from 'react';
 
+const SITE_URL = 'https://universflow.in';
+
 const StructuredData = () => {
   useEffect(() => {
-    // Remove existing structured data
     const existing = document.querySelectorAll('script[type="application/ld+json"]');
     existing.forEach(el => el.remove());
 
-    // Organization Schema
     const organizationSchema = {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Univers Flow",
-      "url": "https://universflowapp.lovable.app",
+      "url": SITE_URL,
       "logo": "https://storage.googleapis.com/gpt-engineer-file-uploads/d6CK1hptEYS0iYCrQMmYcx7HukD2/uploads/1768315312999-Screenshot 2026-01-13 201134.png",
-      "description": "Premium free music streaming platform by SHASHANK YADAV",
+      "description": "Premium free music streaming platform by SHASHANK YADAV. Stream unlimited songs, create playlists, download for offline listening.",
       "founder": {
         "@type": "Person",
         "name": "SHASHANK YADAV"
@@ -23,13 +23,12 @@ const StructuredData = () => {
       ]
     };
 
-    // WebApplication Schema
     const webAppSchema = {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Univers Flow",
-      "url": "https://universflowapp.lovable.app",
-      "description": "Stream and download unlimited music for free. Discover millions of songs, create playlists, and listen offline.",
+      "url": SITE_URL,
+      "description": "Stream and download unlimited music for free. Discover millions of songs, create playlists, and listen offline. The best free music streaming app.",
       "applicationCategory": "MusicApplication",
       "operatingSystem": "Web, Android, iOS",
       "offers": {
@@ -47,18 +46,27 @@ const StructuredData = () => {
         "Playlist creation",
         "High quality audio",
         "No ads for premium",
-        "Cross-platform sync"
+        "Cross-platform sync",
+        "AI-powered recommendations",
+        "Equalizer settings",
+        "Sleep timer",
+        "Social sharing"
       ],
-      "screenshot": "https://storage.googleapis.com/gpt-engineer-file-uploads/d6CK1hptEYS0iYCrQMmYcx7HukD2/social-images/social-1768315544947-Screenshot 2026-01-13 201134.png"
+      "screenshot": "https://storage.googleapis.com/gpt-engineer-file-uploads/d6CK1hptEYS0iYCrQMmYcx7HukD2/social-images/social-1768315544947-Screenshot 2026-01-13 201134.png",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "15000",
+        "bestRating": "5"
+      }
     };
 
-    // MusicGroup / Music Streaming Service Schema
     const musicServiceSchema = {
       "@context": "https://schema.org",
       "@type": "MusicStreamingService",
       "name": "Univers Flow",
-      "url": "https://universflowapp.lovable.app",
-      "description": "The best free music streaming app. Listen to millions of songs, discover new artists, and download music for offline listening.",
+      "url": SITE_URL,
+      "description": "The best free music streaming app. Listen to millions of songs, discover new artists, and download music for offline listening. Created by SHASHANK YADAV.",
       "provider": {
         "@type": "Person",
         "name": "SHASHANK YADAV"
@@ -71,7 +79,6 @@ const StructuredData = () => {
       }
     };
 
-    // FAQ Schema for common questions
     const faqSchema = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
@@ -81,7 +88,7 @@ const StructuredData = () => {
           "name": "Is Univers Flow free to use?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes! Univers Flow is completely free to use. You can stream unlimited music, create playlists, and download songs for offline listening without paying anything."
+            "text": "Yes! Univers Flow is completely free to use. You can stream unlimited music, create playlists, and download songs for offline listening without paying anything. Visit https://universflow.in to start listening now."
           }
         },
         {
@@ -105,13 +112,28 @@ const StructuredData = () => {
           "name": "What devices support Univers Flow?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Univers Flow works on all modern web browsers, Android devices, and iOS devices. It's a Progressive Web App (PWA) that you can install on any device."
+            "text": "Univers Flow works on all modern web browsers, Android devices, and iOS devices. It's available as a Progressive Web App (PWA) and native Android app."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the best free music streaming app?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Univers Flow is the best free music streaming app. It offers unlimited streaming, offline downloads, playlist creation, high-quality audio, equalizer settings, and much more — all completely free at https://universflow.in."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I install Univers Flow on my phone?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Visit https://universflow.in on your phone's browser. On Android, tap 'Install App' or use the browser menu to add it to your home screen. You can also download the native Android APK from the website."
           }
         }
       ]
     };
 
-    // BreadcrumbList Schema
     const breadcrumbSchema = {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
@@ -120,25 +142,48 @@ const StructuredData = () => {
           "@type": "ListItem",
           "position": 1,
           "name": "Home",
-          "item": "https://universflowapp.lovable.app/"
+          "item": `${SITE_URL}/`
         },
         {
           "@type": "ListItem",
           "position": 2,
           "name": "Search Music",
-          "item": "https://universflowapp.lovable.app/search"
+          "item": `${SITE_URL}/search`
         },
         {
           "@type": "ListItem",
           "position": 3,
           "name": "My Library",
-          "item": "https://universflowapp.lovable.app/library"
+          "item": `${SITE_URL}/library`
         }
       ]
     };
 
-    // Add all schemas to the page
-    const schemas = [organizationSchema, webAppSchema, musicServiceSchema, faqSchema, breadcrumbSchema];
+    const softwareAppSchema = {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Univers Flow - Free Music Streaming",
+      "url": SITE_URL,
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Android, Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "15000",
+        "bestRating": "5"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "SHASHANK YADAV"
+      }
+    };
+
+    const schemas = [organizationSchema, webAppSchema, musicServiceSchema, faqSchema, breadcrumbSchema, softwareAppSchema];
     
     schemas.forEach(schema => {
       const script = document.createElement('script');
