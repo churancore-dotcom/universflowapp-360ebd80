@@ -23,7 +23,7 @@ const ArtistDetail = lazy(() => import("./pages/ArtistDetail"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Support = lazy(() => import("./pages/Support"));
-const OfflinePlayerShell = lazy(() => import("./components/OfflinePlayerShell"));
+import OfflinePlayerShell from "./components/OfflinePlayerShell";
 const Offline = lazy(() => import("./pages/Offline"));
 
 const DownloadQueuePanel = lazy(() => import("./components/DownloadQueuePanel"));
