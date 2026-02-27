@@ -22,6 +22,12 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!navigator.onLine) {
+      toast.error('You are offline. Connect to the internet and try again.');
+      return;
+    }
+
     setLoading(true);
 
     try {

@@ -4,6 +4,7 @@ import { WifiOff, Play, Music, HardDrive, Shuffle, Download, LogIn } from 'lucid
 import { usePlayer } from '@/contexts/PlayerContext';
 import { useDownloads } from '@/contexts/DownloadContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import MiniPlayer from '@/components/MiniPlayer';
 import FullscreenPlayer from '@/components/FullscreenPlayer';
 import { triggerHaptic } from '@/hooks/useHaptics';
@@ -55,6 +56,14 @@ const OfflinePlayerShell = memo(function OfflinePlayerShell() {
     playSong(song as any, song.audio_url, cachedSongs as any);
   };
 
+  const handleSignIn = () => {
+    if (!navigator.onLine) {
+      toast.error('You are offline. Connect to the internet to sign in.');
+      return;
+    }
+    navigate('/auth');
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col pb-40 overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header */}
@@ -71,7 +80,7 @@ const OfflinePlayerShell = memo(function OfflinePlayerShell() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate('/auth')}
+              onClick={handleSignIn}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 active:scale-95 transition-transform"
             >
               <LogIn className="w-3.5 h-3.5 text-primary" />
