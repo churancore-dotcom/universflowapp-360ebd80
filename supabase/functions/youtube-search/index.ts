@@ -5,14 +5,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Piped instances for searching (NO API key needed, unlimited, free)
-const PIPED_INSTANCES = [
-  'https://pipedapi.kavin.rocks',
-  'https://pipedapi.adminforge.de',
-  'https://pipedapi.r4fo.com',
-  'https://pipedapi.leptons.xyz',
-  'https://pipedapi.moomoo.me',
-  'https://piped-api.lunar.icu',
+// Invidious instances for search (reliable from servers, no API key needed)
+const INVIDIOUS_INSTANCES = [
+  'https://inv.nadeko.net',
+  'https://invidious.nerdvpn.de',
+  'https://invidious.perennialte.ch',
+  'https://iv.datura.network',
+  'https://invidious.privacyredirect.com',
+  'https://invidious.protokolla.fi',
+  'https://yt.artemislena.eu',
+  'https://invidious.fdn.fr',
 ];
 
 function shuffle<T>(arr: T[]): T[] {
@@ -36,15 +38,18 @@ function decodeEntities(str: string): string {
     .replace(/&#x2F;/g, '/');
 }
 
-async function searchPiped(query: string, instance: string, filter: string): Promise<any[] | null> {
+async function searchInvidious(query: string, instance: string): Promise<any[] | null> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 12000);
 
-    const url = `${instance}/search?q=${encodeURIComponent(query)}&filter=${filter}`;
+    const url = `${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video&sort_by=relevance`;
     const resp = await fetch(url, {
       signal: controller.signal,
-      headers: { 'Accept': 'application/json' },
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
     });
     clearTimeout(timeout);
 
@@ -53,21 +58,23 @@ async function searchPiped(query: string, instance: string, filter: string): Pro
       return null;
     }
 
-    const data = await resp.json();
-    const items = data.items || [];
+    const items = await resp.json();
+    if (!Array.isArray(items)) return null;
 
     return items
-      .filter((item: any) => item.url && item.type === 'stream')
+      .filter((item: any) => item.videoId && item.type === 'video')
       .map((item: any) => {
-        // Extract videoId from /watch?v=XXXXX
-        const match = item.url?.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
-        const videoId = match ? match[1] : '';
+        // Pick best thumbnail
+        const thumb = item.videoThumbnails?.find((t: any) => t.quality === 'medium')?.url
+          || item.videoThumbnails?.find((t: any) => t.quality === 'high')?.url
+          || item.videoThumbnails?.[0]?.url
+          || `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`;
         return {
-          videoId,
+          videoId: item.videoId,
           title: decodeEntities(item.title || ''),
-          channelTitle: decodeEntities(item.uploaderName || item.uploader || ''),
-          thumbnail: item.thumbnail || '',
-          duration: item.duration || 0,
+          channelTitle: decodeEntities(item.author || ''),
+          thumbnail: thumb,
+          duration: item.lengthSeconds || 0,
         };
       })
       .filter((r: any) => r.videoId);
@@ -91,13 +98,12 @@ serve(async (req) => {
     }
 
     const searchQuery = query.trim();
-    const filter = 'music_songs'; // Piped music filter
 
-    // Try Piped instances (no API key needed!)
-    const instances = shuffle(PIPED_INSTANCES);
+    // Try Invidious instances (no API key needed, works from servers)
+    const instances = shuffle(INVIDIOUS_INSTANCES);
     for (const instance of instances) {
-      console.log(`Trying Piped search: ${instance}`);
-      const results = await searchPiped(searchQuery, instance, filter);
+      console.log(`Trying search: ${instance}`);
+      const results = await searchInvidious(searchQuery, instance);
       if (results && results.length > 0) {
         const limited = results.slice(0, Math.min(maxResults, 50));
         console.log(`✓ Found ${limited.length} results via ${instance}`);
@@ -106,26 +112,7 @@ serve(async (req) => {
           results: limited,
           totalResults: limited.length,
           query: searchQuery,
-          source: 'piped',
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
-    // Fallback: try with 'videos' filter instead of 'music_songs'
-    for (const instance of instances) {
-      console.log(`Fallback search (videos filter): ${instance}`);
-      const results = await searchPiped(searchQuery, instance, 'videos');
-      if (results && results.length > 0) {
-        const limited = results.slice(0, Math.min(maxResults, 50));
-        console.log(`✓ Fallback found ${limited.length} results via ${instance}`);
-        return new Response(JSON.stringify({
-          success: true,
-          results: limited,
-          totalResults: limited.length,
-          query: searchQuery,
-          source: 'piped-fallback',
+          source: 'invidious',
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
