@@ -240,6 +240,9 @@ const FullscreenPlayer = memo(function FullscreenPlayer() {
                   </motion.div>
                 </AnimatePresence>
               </div>
+
+              {/* Song Suggestions - right below album art */}
+              <SongSuggestions allSongs={allSongs} />
             </div>
 
             {/* Controls Section */}
