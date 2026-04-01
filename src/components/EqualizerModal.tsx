@@ -96,25 +96,28 @@ const EqualizerModal = ({ isOpen, onClose }: EqualizerModalProps) => {
     } catch {}
   }, [bands, bassBoost, reverb, playbackSpeed, activePreset]);
 
-  // When modal opens: just resume context and push settings. NEVER re-bind.
-  // The audio engine is already bound in PlayerContext BEFORE play starts.
+  // When modal opens: resume context, bind if needed, push settings
   useEffect(() => {
     if (!isOpen) return;
     
     (async () => {
-      // Resume for user gesture requirement
       await audioEngine.resume();
+      
+      // If not connected and we have an audio element, bind now (user gesture context)
+      if (!audioEngine.connected && audioElement) {
+        await audioEngine.bind(audioElement);
+      }
+      
       const isConnected = audioEngine.connected;
       setConnected(isConnected);
       
-      // Push current settings
       if (isConnected) {
         audioEngine.setBands(bands.map(b => b.gain));
         audioEngine.setBassBoost(bassBoost, bands.map(b => b.gain));
         audioEngine.setReverb(reverb);
       }
     })();
-  }, [isOpen]);
+  }, [isOpen, audioElement]);
 
   // Push changes to engine
   useEffect(() => {
