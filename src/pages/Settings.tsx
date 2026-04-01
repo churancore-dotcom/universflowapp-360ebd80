@@ -154,6 +154,16 @@ const Settings = () => {
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
+              <button
+                onClick={() => navigate('/request-song')}
+                className="w-full px-4 py-3 flex items-center justify-between active:bg-muted/50"
+              >
+                <div className="flex items-center gap-2">
+                  <Send className="w-4 h-4 text-primary" />
+                  <span className="text-sm">Request a Song</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
             </div>
           </section>
 
