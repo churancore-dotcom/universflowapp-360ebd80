@@ -22,7 +22,9 @@ const AudiusTrending = memo(() => {
   useEffect(() => {
     const fetchTrending = async () => {
       try {
-        const res = await fetch(`${AUDIUS_BASE}/tracks/trending?app_name=${APP_NAME}`);
+        const res = await fetch(`${AUDIUS_BASE}/tracks/trending?app_name=${APP_NAME}`, {
+          headers: { 'Accept': 'application/json' },
+        });
         if (!res.ok) throw new Error('Audius API error');
         const json = await res.json();
         setTracks((json.data || []).slice(0, 20));
