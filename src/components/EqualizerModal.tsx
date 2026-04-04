@@ -247,15 +247,17 @@ const EqualizerModal = ({ isOpen, onClose }: EqualizerModalProps) => {
   // Helper functions that directly manipulate the audio graph
   function applyBands(currentBands: EQBand[], currentBassBoost: number) {
     if (!eqState.filters.length) return;
-    const boost = currentBassBoost / 8; // Stronger bass boost multiplier
+    // Gentle bass boost: max +6dB at 100%, scaled subtly
+    const boost = (currentBassBoost / 100) * 6;
     currentBands.forEach((band, i) => {
       if (eqState.filters[i]) {
         let gain = band.gain;
-        // Add bass boost to low frequency bands
+        // Only add bass boost to the 3 lowest bands
         if (i === 0) gain += boost;
-        else if (i === 1) gain += boost * 0.75;
-        else if (i === 2) gain += boost * 0.4;
-        eqState.filters[i].gain.value = gain;
+        else if (i === 1) gain += boost * 0.6;
+        else if (i === 2) gain += boost * 0.3;
+        // Clamp to safe range
+        eqState.filters[i].gain.value = Math.max(-12, Math.min(12, gain));
       }
     });
   }
