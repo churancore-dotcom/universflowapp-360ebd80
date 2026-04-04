@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Headphones, TrendingUp } from 'lucide-react';
 import { usePlayer, Song } from '@/contexts/PlayerContext';
 
-const AUDIUS_BASE = 'https://discovery-us-01.audius.openplayer.org/v1';
+const AUDIUS_BASE = 'https://audius-discovery-1.the-standard.io/v1';
 const APP_NAME = 'univers_flow_official';
 
 interface AudiusTrack {
