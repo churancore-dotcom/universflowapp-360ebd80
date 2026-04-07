@@ -63,7 +63,7 @@ const navItems = [
   { icon: BarChart3, label: 'Scheduler', path: '/admin/scheduler' },
   { icon: BarChart3, label: 'Backup', path: '/admin/backup' },
   { icon: Settings, label: 'Settings', path: '/admin/settings' },
-  
+  { icon: Bot, label: 'Gemma 4 AI', path: '/admin/ai-assistant' },
 ];
 
 const AdminLayout = () => {
