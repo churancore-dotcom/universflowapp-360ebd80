@@ -239,7 +239,7 @@ const Search = () => {
                 transition: 'border-color 0.2s',
               }} />
             {query && (
-              <button onClick={() => { setQuery(''); setAudiusResults([]); setYtResults([]); }}
+              <button onClick={() => { setQuery(''); setAudiusResults([]); setIndexedResults([]); }}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full"
                 style={{ background: 'rgba(255,255,255,0.15)' }}>
                 <X className="w-3 h-3" />
@@ -343,7 +343,7 @@ const Search = () => {
               {/* Library + Audius results */}
               {libraryAndAudius.length > 0 && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-                  {source !== 'ytmusic' && (
+                  {source !== 'indexer' && (
                     <h2 className="text-sm font-bold mb-3">
                                {source === 'all' ? 'Library & Audius' : source === 'library' ? 'Library' : 'Audius'} · {libraryAndAudius.length} results
                     </h2>
