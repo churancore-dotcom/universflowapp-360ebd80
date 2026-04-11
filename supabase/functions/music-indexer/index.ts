@@ -293,17 +293,39 @@ async function searchForCandidates(artist: string, title: string): Promise<Recor
 
   if (candidates.length >= 4) return candidates.slice(0, 8);
 
-  // Fallback to Invidious
-  const invInstances = getInvidiousInstances().filter(isHealthy).slice(0, 3);
+  // Fallback to YouTube Data API (most reliable search)
+  if (YOUTUBE_API_KEY) {
+    try {
+      const ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=6&key=${YOUTUBE_API_KEY}`;
+      const ytData = await fetchJson(ytUrl, 6000);
+      const ytItems = Array.isArray(ytData?.items) ? ytData.items : [];
+      for (const item of ytItems) {
+        const vid = item?.id?.videoId;
+        if (vid) {
+          addCandidate({
+            videoId: vid,
+            title: item?.snippet?.title || '',
+            author: item?.snippet?.channelTitle || '',
+            _source: 'youtube-api',
+          });
+        }
+      }
+      console.log(`[search] YouTube API returned ${ytItems.length} results`);
+    } catch (e) {
+      console.warn(`[search] YouTube API failed:`, (e as Error).message);
+    }
+  }
+
+  if (candidates.length >= 4) return candidates.slice(0, 8);
+
+  // Last resort: Invidious
+  const invInstances = getInvidiousInstances().filter(isHealthy).slice(0, 2);
   const invResults = await Promise.allSettled(
     invInstances.map(async (inst) => {
       try {
         const data = await fetchJson(`${inst}/api/v1/search?q=${encodeURIComponent(query)}&type=video&sort_by=relevance`, 6000);
         return Array.isArray(data) ? data.map((item: any) => ({ ...item, _source: inst })) : [];
-      } catch (e) {
-        markFailed(inst);
-        throw e;
-      }
+      } catch (e) { markFailed(inst); throw e; }
     })
   );
 
