@@ -357,36 +357,58 @@ function pickBestPipedStream(data: Record<string, any>, instance: string) {
 }
 
 async function resolveVideoId(videoId: string): Promise<{ streamUrl: string; duration?: number } | null> {
-  // Race Piped and Invidious in parallel for this videoId
-  const piped = getPipedInstances().filter(isHealthy).slice(0, 3);
-  const inv = getInvidiousInstances().filter(isHealthy).slice(0, 3);
+  // Priority: try piped.private.coffee FIRST (most reliable), then race others
+  const piped = getPipedInstances().filter(isHealthy);
+  const inv = getInvidiousInstances().filter(isHealthy);
 
+  // Put the known-reliable instance first
+  const primaryPiped = 'https://api.piped.private.coffee';
+  const orderedPiped = [primaryPiped, ...piped.filter(i => i !== primaryPiped)].slice(0, 4);
+
+  // Try primary first (fast path)
+  try {
+    const data = await fetchJson(`${primaryPiped}/streams/${videoId}`, 8000);
+    const url = pickBestPipedStream(data, primaryPiped);
+    if (url) {
+      console.log(`[resolve] ✓ ${videoId} via ${primaryPiped}`);
+      return { streamUrl: url, duration: Number(data.duration || 0) || undefined };
+    }
+  } catch (e) {
+    console.warn(`[resolve] primary failed for ${videoId}:`, (e as Error).message);
+  }
+
+  // Fallback: race remaining instances
   const attempts = [
-    ...piped.map(async (inst) => {
+    ...orderedPiped.slice(1).map(async (inst) => {
       try {
         const data = await fetchJson(`${inst}/streams/${videoId}`, 7000);
         const url = pickBestPipedStream(data, inst);
-        if (!url) throw new Error('no stream');
+        if (!url) throw new Error('no audio stream');
+        console.log(`[resolve] ✓ ${videoId} via ${inst}`);
         return { streamUrl: url, duration: Number(data.duration || 0) || undefined };
       } catch (e) { markFailed(inst); throw e; }
     }),
-    ...inv.map(async (inst) => {
+    ...inv.slice(0, 2).map(async (inst) => {
       try {
         const data = await fetchJson(`${inst}/api/v1/videos/${videoId}`, 7000);
         const url = pickBestStream(data, inst);
-        if (!url) throw new Error('no stream');
+        if (!url) throw new Error('no audio stream');
+        console.log(`[resolve] ✓ ${videoId} via ${inst}`);
         return { streamUrl: url, duration: Number(data.lengthSeconds || 0) || undefined };
       } catch (e) { markFailed(inst); throw e; }
     }),
   ];
 
-  if (!attempts.length) return null;
+  if (!attempts.length) {
+    console.warn(`[resolve] no instances available for ${videoId}`);
+    return null;
+  }
 
-  // Use Promise.any to get the FIRST success
   try {
     return await Promise.any(attempts);
-  } catch {
-    return null; // all failed
+  } catch (e) {
+    console.warn(`[resolve] all fallbacks failed for ${videoId}:`, (e as AggregateError)?.errors?.map((err: Error) => err.message)?.join(', '));
+    return null;
   }
 }
 
