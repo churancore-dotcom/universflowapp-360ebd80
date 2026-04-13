@@ -416,6 +416,13 @@ function normalizeUrl(candidate: string | undefined, origin: string) {
   return candidate;
 }
 
+function isCorsCompatible(url: string) {
+  // Piped proxy URLs have CORS; raw googlevideo.com does NOT
+  if (!url) return false;
+  if (url.includes('googlevideo.com') && !url.includes('proxy.')) return false;
+  return true;
+}
+
 function pickBestStream(data: Record<string, any>, instance: string) {
   const adaptive = Array.isArray(data.adaptiveFormats) ? data.adaptiveFormats : [];
   const audio = adaptive
@@ -427,7 +434,9 @@ function pickBestStream(data: Record<string, any>, instance: string) {
       return (b.bitrate || 0) - (a.bitrate || 0);
     });
   const chosen = audio[0] || (Array.isArray(data.formatStreams) ? data.formatStreams[0] : null);
-  return normalizeUrl(chosen?.proxyUrl || chosen?.url, instance);
+  // ALWAYS prefer proxyUrl for CORS compatibility in browser
+  const raw = normalizeUrl(chosen?.proxyUrl, instance) || normalizeUrl(chosen?.url, instance);
+  return raw;
 }
 
 function pickBestPipedStream(data: Record<string, any>, instance: string) {
@@ -526,7 +535,7 @@ async function resolveStream(artist: string, title: string): Promise<ResolveResu
         duration: resolved.duration || Number(candidate.lengthSeconds || candidate.duration || 0) || undefined,
         title, artist,
       };
-      setCached(ck, result, 10 * 60 * 1000);
+      setCached(ck, result, 45 * 60 * 1000); // cache resolved streams for 45 min
       return result;
     }
   }
