@@ -80,6 +80,7 @@ const FullscreenPlayer = memo(function FullscreenPlayer() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
+  const [showEqualizer, setShowEqualizer] = useState(false);
   const [direction, setDirection] = useState(0);
   const prevSongIdRef = useRef<string | null>(null);
   const navigate = useNavigate();
