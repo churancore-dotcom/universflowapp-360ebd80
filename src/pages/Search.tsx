@@ -324,6 +324,38 @@ const Search = () => {
             {!query && !activeFilter && (
               <motion.div key="browse" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+
+                {/* Search History */}
+                {searchHistory.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h2 className="text-sm font-bold flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-muted-foreground" /> Recent Searches
+                      </h2>
+                      <button
+                        onClick={() => { clearSearchHistory(); setSearchHistory([]); }}
+                        className="text-[11px] text-muted-foreground flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3 h-3" /> Clear
+                      </button>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {searchHistory.map((term) => (
+                        <button
+                          key={term}
+                          onClick={() => setQuery(term)}
+                          className="px-3 py-1.5 rounded-full text-xs font-medium"
+                          style={{
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '0.5px solid rgba(255,255,255,0.08)',
+                          }}
+                        >
+                          {term}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <h2 className="text-sm font-bold mb-2.5 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-accent" /> Moods
                 </h2>
