@@ -404,25 +404,24 @@ const Search = () => {
           {/* Results */}
           {searching ? <SearchSkeleton /> : (
             <>
-              {/* Library + Audius results */}
-              {libraryAndAudius.length > 0 && (
+              {/* Library results */}
+              {libraryResults.length > 0 && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
                   {source !== 'indexer' && (
                     <h2 className="text-sm font-bold mb-3">
-                               {source === 'all' ? 'Library & Audius' : source === 'library' ? 'Library' : 'Audius'} · {libraryAndAudius.length} results
+                      {source === 'all' ? 'Library Songs' : 'Your Library'} · {libraryResults.length} results
                     </h2>
                   )}
                   <div className="space-y-1">
-                    {libraryAndAudius.map((song, i) => {
+                    {libraryResults.map((song, i) => {
                       const isActive = currentSong?.id === song.id;
-                      const isAudius = song.id.startsWith('audius-');
-                      const offlineUrl = isAudius ? undefined : getDownloadedUrl(song.id);
+                      const offlineUrl = getDownloadedUrl(song.id);
                       return (
                         <motion.div key={song.id}
                           className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer active:scale-[0.98] transition-all ${isActive ? 'bg-primary/10' : 'active:bg-white/5'}`}
                           initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.025, duration: 0.25 }}
-                          onClick={() => playSong(song, offlineUrl, libraryAndAudius)}>
+                          onClick={() => playSong(song, offlineUrl, libraryResults)}>
                           <div className={`relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ${isActive ? 'shadow-lg shadow-primary/20' : 'shadow-md'}`}>
                             {song.cover_url ? (
                               <img src={song.cover_url} alt="" className="w-full h-full object-cover" />
@@ -431,18 +430,10 @@ const Search = () => {
                                 <Music className="w-4 h-4 text-foreground/30" />
                               </div>
                             )}
-                            {isAudius && (
-                              <div className="absolute bottom-0 right-0 w-4 h-4 rounded-tl-md bg-purple-500 flex items-center justify-center">
-                                <Headphones className="w-2.5 h-2.5 text-white" />
-                              </div>
-                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className={`font-semibold text-[13px] truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>{song.title}</p>
-                            <p className="text-[11px] text-muted-foreground/60 truncate mt-0.5">
-                              {song.artist}
-                              {isAudius && <span className="ml-1 text-purple-400">· Audius</span>}
-                            </p>
+                            <p className="text-[11px] text-muted-foreground/60 truncate mt-0.5">{song.artist}</p>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {isActive && isPlaying ? (
@@ -467,10 +458,10 @@ const Search = () => {
 
               {/* Indexed stream results */}
               {visibleIndexedResults.length > 0 && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={libraryAndAudius.length > 0 ? 'mt-6' : ''}>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={libraryResults.length > 0 ? 'mt-6' : ''}>
                   <h2 className="text-sm font-bold mb-3 flex items-center gap-1.5">
                     <Radio className="w-4 h-4 text-primary" />
-                    Web Streams · {visibleIndexedResults.length} results
+                    Worldwide Songs · {visibleIndexedResults.length} results
                   </h2>
                   <div className="space-y-1">
                     {visibleIndexedResults.map((track, i) => {
@@ -496,12 +487,9 @@ const Search = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className={`font-semibold text-[13px] truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>
-                              {isResolving ? 'Loading stream...' : track.title}
+                              {isResolving ? 'Starting song...' : track.title}
                             </p>
-                            <p className="text-[11px] text-muted-foreground/60 truncate mt-0.5">
-                              {track.artist}
-                              <span className="ml-1 text-primary">· Singer</span>
-                            </p>
+                            <p className="text-[11px] text-muted-foreground/60 truncate mt-0.5">{track.artist}</p>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {isActive && isPlaying ? (
@@ -524,7 +512,7 @@ const Search = () => {
               )}
 
               {/* No results */}
-              {(query.length > 1 || activeFilter) && !searching && libraryAndAudius.length === 0 && visibleIndexedResults.length === 0 && (
+              {(query.length > 1 || activeFilter) && !searching && libraryResults.length === 0 && visibleIndexedResults.length === 0 && (
                 <div className="text-center py-8">
                   <div className="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.06)' }}>
