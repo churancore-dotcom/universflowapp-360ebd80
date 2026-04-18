@@ -1092,11 +1092,23 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [queue, currentIndex, playSongAtIndex]);
 
   const seek = useCallback((time: number) => {
+    if (youtubeActiveRef.current && youtubePlayerRef.current) {
+      try { youtubePlayerRef.current.seekTo(time, true); } catch { /* ignore */ }
+      setProgress(time);
+      return;
+    }
     if (audioRef.current) {
       audioRef.current.currentTime = time;
       setProgress(time);
     }
   }, []);
+
+  // Sync volume to YT player when it changes
+  useEffect(() => {
+    if (youtubeActiveRef.current && youtubePlayerRef.current) {
+      try { youtubePlayerRef.current.setVolume?.(Math.round(volume * 100)); } catch { /* ignore */ }
+    }
+  }, [volume]);
 
   const setVolume = useCallback((vol: number) => {
     setVolumeState(vol);
