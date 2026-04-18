@@ -585,17 +585,84 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [clearRealtime, clearRoomState, room, user]);
 
+  const sendReaction = useCallback(async (emoji: string) => {
+    if (!channelRef.current || !user || !profile || !emoji) return;
+    const reaction: MateReaction = {
+      id: `${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      userId: user.id,
+      username: profile.username,
+      emoji,
+      createdAt: Date.now(),
+    };
+    try {
+      await channelRef.current.send({ type: 'broadcast', event: 'reaction', payload: reaction });
+      // Show locally too
+      setReactions((prev) => [...prev.slice(-19), reaction]);
+      window.setTimeout(() => setReactions((prev) => prev.filter((x) => x.id !== reaction.id)), 3500);
+      triggerHaptic('impactLight');
+    } catch {
+      toast.error('Could not send reaction');
+    }
+  }, [profile, user]);
+
+  const kickParticipant = useCallback(async (userId: string) => {
+    if (!channelRef.current || !room || room.role !== 'host' || userId === user?.id) return;
+    try {
+      await channelRef.current.send({ type: 'broadcast', event: 'kick', payload: { userId } });
+      await supabase.from('listening_session_members').delete().eq('session_id', room.sessionId).eq('user_id', userId);
+      toast.success('Removed from room');
+      triggerHaptic('warning');
+    } catch {
+      toast.error('Could not remove that listener');
+    }
+  }, [room, user?.id]);
+
+  const setMinimized = useCallback((minimized: boolean) => setIsMinimized(minimized), []);
+
+  // Quick-join deep link: ?join=CODE
+  useEffect(() => {
+    if (!user || !profile || room) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('join');
+      if (code && code.length === 6) {
+        params.delete('join');
+        const newSearch = params.toString();
+        const cleanUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ''}${window.location.hash}`;
+        window.history.replaceState({}, '', cleanUrl);
+        void joinSession(code);
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, profile]);
+
+  const inviteUrl = useMemo(() => {
+    if (!room?.sessionCode) return null;
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://universflow.in';
+      return `${origin}/listen-together?join=${room.sessionCode}`;
+    } catch {
+      return null;
+    }
+  }, [room?.sessionCode]);
+
   const value = useMemo<PlayWithMateContextValue>(
     () => ({
       isConnected: Boolean(room),
       loading,
       room,
       participants,
+      reactions,
+      isMinimized,
+      setMinimized,
       createSession,
       joinSession,
       leaveSession,
+      sendReaction,
+      kickParticipant,
+      inviteUrl,
     }),
-    [createSession, joinSession, leaveSession, loading, participants, room],
+    [createSession, inviteUrl, isMinimized, joinSession, kickParticipant, leaveSession, loading, participants, reactions, room, sendReaction, setMinimized],
   );
 
   return <PlayWithMateContext.Provider value={value}>{children}</PlayWithMateContext.Provider>;
