@@ -30,6 +30,14 @@ export interface MateParticipant {
   isHost: boolean;
 }
 
+export interface MateReaction {
+  id: string;
+  userId: string;
+  username: string;
+  emoji: string;
+  createdAt: number;
+}
+
 interface ActiveRoom {
   sessionId: string;
   sessionCode: string;
@@ -42,9 +50,15 @@ interface PlayWithMateContextValue {
   loading: boolean;
   room: ActiveRoom | null;
   participants: MateParticipant[];
+  reactions: MateReaction[];
+  isMinimized: boolean;
+  setMinimized: (minimized: boolean) => void;
   createSession: () => Promise<void>;
   joinSession: (code: string) => Promise<void>;
   leaveSession: () => Promise<void>;
+  sendReaction: (emoji: string) => Promise<void>;
+  kickParticipant: (userId: string) => Promise<void>;
+  inviteUrl: string | null;
 }
 
 const PlayWithMateContext = createContext<PlayWithMateContextValue | undefined>(undefined);
