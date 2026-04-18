@@ -970,21 +970,31 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [pendingSong, playActualSong]);
 
   const togglePlay = useCallback(() => {
-    if (!audioRef.current || !currentSong) return;
+    if (!currentSong) return;
 
+    if (youtubeActiveRef.current && youtubePlayerRef.current) {
+      try {
+        if (isPlaying) { youtubePlayerRef.current.pauseVideo(); setIsPlaying(false); }
+        else { youtubePlayerRef.current.playVideo(); setIsPlaying(true); }
+      } catch { /* ignore */ }
+      return;
+    }
+
+    if (!audioRef.current) return;
     if (audioRef.current.paused) {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(err => {
-        console.warn('Play failed:', err.message);
-      });
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(err => console.warn('Play failed:', err.message));
     } else {
       audioRef.current.pause();
       setIsPlaying(false);
     }
-  }, [currentSong]);
+  }, [currentSong, isPlaying]);
 
   const pause = useCallback(() => {
+    if (youtubeActiveRef.current && youtubePlayerRef.current) {
+      try { youtubePlayerRef.current.pauseVideo(); } catch { /* ignore */ }
+      setIsPlaying(false);
+      return;
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -992,10 +1002,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const play = useCallback(() => {
-    if (audioRef.current && currentSong) {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(console.warn);
+    if (!currentSong) return;
+    if (youtubeActiveRef.current && youtubePlayerRef.current) {
+      try { youtubePlayerRef.current.playVideo(); } catch { /* ignore */ }
+      setIsPlaying(true);
+      return;
+    }
+    if (audioRef.current) {
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(console.warn);
     }
   }, [currentSong]);
 
@@ -1005,6 +1019,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       crossfadeIntervalRef.current = null;
     }
     isCrossfading.current = false;
+
+    teardownYouTubePlayback();
 
     if (audioRef.current) {
       audioRef.current.pause();
@@ -1023,7 +1039,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setQueueState([]);
     setCurrentIndex(0);
     setExpanded(false);
-  }, []);
+  }, [teardownYouTubePlayback]);
 
   const nextSong = useCallback(() => {
     if (queue.length === 0) return;
