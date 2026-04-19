@@ -38,6 +38,18 @@ export interface MateReaction {
   createdAt: number;
 }
 
+export interface MateSuggestion {
+  id: string;
+  userId: string;
+  username: string;
+  title: string;
+  artist: string;
+  cover_url?: string;
+  audio_url?: string;
+  source?: string;
+  createdAt: number;
+}
+
 interface ActiveRoom {
   sessionId: string;
   sessionCode: string;
@@ -51,12 +63,16 @@ interface PlayWithMateContextValue {
   room: ActiveRoom | null;
   participants: MateParticipant[];
   reactions: MateReaction[];
+  suggestions: MateSuggestion[];
   isMinimized: boolean;
   setMinimized: (minimized: boolean) => void;
   createSession: () => Promise<void>;
   joinSession: (code: string) => Promise<void>;
   leaveSession: () => Promise<void>;
   sendReaction: (emoji: string) => Promise<void>;
+  suggestTrack: (track: { title: string; artist: string; cover_url?: string; audio_url?: string; source?: string }) => Promise<void>;
+  acceptSuggestion: (suggestionId: string) => Promise<void>;
+  dismissSuggestion: (suggestionId: string) => void;
   kickParticipant: (userId: string) => Promise<void>;
   inviteUrl: string | null;
 }
@@ -123,6 +139,7 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
   const [room, setRoom] = useState<ActiveRoom | null>(readStoredRoom());
   const [participants, setParticipants] = useState<MateParticipant[]>([]);
   const [reactions, setReactions] = useState<MateReaction[]>([]);
+  const [suggestions, setSuggestions] = useState<MateSuggestion[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<{ username: string; avatarUrl?: string } | null>(null);
@@ -155,6 +172,7 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
   const clearRoomState = useCallback(() => {
     setRoom(null);
     setParticipants([]);
+    setSuggestions([]);
     writeStoredRoom(null);
   }, []);
 
@@ -329,6 +347,19 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
             toast.info('You were removed from the room');
             clearRealtime();
             clearRoomState();
+          }
+        })
+        .on('broadcast', { event: 'suggestion' }, ({ payload }) => {
+          const s = payload as MateSuggestion;
+          if (!s?.title || !s?.artist) return;
+          // Only host receives suggestions actively; guests can also see for context
+          if (nextRoom.role === 'host' && s.userId !== user.id) {
+            setSuggestions((prev) => {
+              const next = [...prev.filter((x) => x.id !== s.id), s];
+              return next.slice(-12);
+            });
+            toast.info(`💡 ${s.username} suggested "${s.title}"`);
+            triggerHaptic('impactLight');
           }
         })
         .on(
@@ -617,6 +648,71 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [room, user?.id]);
 
+  const suggestTrack = useCallback(
+    async (track: { title: string; artist: string; cover_url?: string; audio_url?: string; source?: string }) => {
+      if (!channelRef.current || !user || !profile || !room) {
+        toast.error('Join a room first');
+        return;
+      }
+      if (room.role === 'host') {
+        toast.info('You are the host — just play it!');
+        return;
+      }
+      if (!track.title || !track.artist) {
+        toast.error('Pick a song first');
+        return;
+      }
+      const suggestion: MateSuggestion = {
+        id: `${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        userId: user.id,
+        username: profile.username,
+        title: track.title,
+        artist: track.artist,
+        cover_url: track.cover_url,
+        audio_url: track.audio_url,
+        source: track.source,
+        createdAt: Date.now(),
+      };
+      try {
+        await channelRef.current.send({ type: 'broadcast', event: 'suggestion', payload: suggestion });
+        toast.success('Sent to host ✨');
+        triggerHaptic('success');
+      } catch {
+        toast.error('Could not send suggestion');
+      }
+    },
+    [profile, room, user],
+  );
+
+  const acceptSuggestion = useCallback(
+    async (suggestionId: string) => {
+      if (room?.role !== 'host') return;
+      const s = suggestions.find((x) => x.id === suggestionId);
+      if (!s) return;
+      const song: Song = {
+        id: s.audio_url ? `mate-sug-${suggestionId}` : `lfm-${s.artist}-${s.title}`.toLowerCase().replace(/\s+/g, '-'),
+        title: s.title,
+        artist: s.artist,
+        cover_url: s.cover_url,
+        audio_url: s.audio_url || '',
+        source: (s.source as Song['source']) || 'indexed',
+      };
+      try {
+        playSong(song, undefined, [song]);
+        setSuggestions((prev) => prev.filter((x) => x.id !== suggestionId));
+        toast.success(`Now playing ${s.username}'s pick`);
+        triggerHaptic('success');
+      } catch {
+        toast.error('Could not play that suggestion');
+      }
+    },
+    [playSong, room?.role, suggestions],
+  );
+
+  const dismissSuggestion = useCallback((suggestionId: string) => {
+    setSuggestions((prev) => prev.filter((x) => x.id !== suggestionId));
+  }, []);
+
   const setMinimized = useCallback((minimized: boolean) => setIsMinimized(minimized), []);
 
   // Quick-join deep link: ?join=CODE
@@ -653,17 +749,22 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
       room,
       participants,
       reactions,
+      suggestions,
       isMinimized,
       setMinimized,
       createSession,
       joinSession,
       leaveSession,
       sendReaction,
+      suggestTrack,
+      acceptSuggestion,
+      dismissSuggestion,
       kickParticipant,
       inviteUrl,
     }),
-    [createSession, inviteUrl, isMinimized, joinSession, kickParticipant, leaveSession, loading, participants, reactions, room, sendReaction, setMinimized],
+    [acceptSuggestion, createSession, dismissSuggestion, inviteUrl, isMinimized, joinSession, kickParticipant, leaveSession, loading, participants, reactions, room, sendReaction, setMinimized, suggestTrack, suggestions],
   );
+
 
   return <PlayWithMateContext.Provider value={value}>{children}</PlayWithMateContext.Provider>;
 };
