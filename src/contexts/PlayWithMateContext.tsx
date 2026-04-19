@@ -172,6 +172,7 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
   const clearRoomState = useCallback(() => {
     setRoom(null);
     setParticipants([]);
+    setSuggestions([]);
     writeStoredRoom(null);
   }, []);
 
