@@ -139,6 +139,7 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
   const [room, setRoom] = useState<ActiveRoom | null>(readStoredRoom());
   const [participants, setParticipants] = useState<MateParticipant[]>([]);
   const [reactions, setReactions] = useState<MateReaction[]>([]);
+  const [suggestions, setSuggestions] = useState<MateSuggestion[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<{ username: string; avatarUrl?: string } | null>(null);
@@ -345,6 +346,19 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
             toast.info('You were removed from the room');
             clearRealtime();
             clearRoomState();
+          }
+        })
+        .on('broadcast', { event: 'suggestion' }, ({ payload }) => {
+          const s = payload as MateSuggestion;
+          if (!s?.title || !s?.artist) return;
+          // Only host receives suggestions actively; guests can also see for context
+          if (nextRoom.role === 'host' && s.userId !== user.id) {
+            setSuggestions((prev) => {
+              const next = [...prev.filter((x) => x.id !== s.id), s];
+              return next.slice(-12);
+            });
+            toast.info(`💡 ${s.username} suggested "${s.title}"`);
+            triggerHaptic('impactLight');
           }
         })
         .on(
