@@ -325,6 +325,97 @@ const PlayWithMate = () => {
                   )}
                 </div>
 
+                {/* Suggest a track (guests) */}
+                {!isHost && (
+                  <div className="rounded-3xl border border-primary/30 bg-card/70 p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+                        <Lightbulb className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold">Suggest a track</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Tap to send the host whatever you're listening to right now.
+                        </p>
+                        <Button
+                          disabled={!currentSong}
+                          onClick={() => currentSong && void suggestTrack({
+                            title: currentSong.title,
+                            artist: currentSong.artist,
+                            cover_url: currentSong.cover_url,
+                            audio_url: currentSong.audio_url,
+                            source: currentSong.source,
+                          })}
+                          className="mt-3 h-10 rounded-xl w-full"
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          {currentSong ? `Suggest "${currentSong.title}"` : 'Play a song to suggest'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Suggestion inbox (host only) */}
+                {isHost && suggestions.length > 0 && (
+                  <div className="rounded-3xl border border-primary/40 bg-card/70 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-sm font-bold flex items-center gap-2">
+                          <Lightbulb className="w-4 h-4 text-primary" />
+                          Guest suggestions
+                        </p>
+                        <p className="text-xs text-muted-foreground">Pick one to play instantly for everyone.</p>
+                      </div>
+                      <span className="px-2 py-1 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
+                        {suggestions.length}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <AnimatePresence>
+                        {suggestions.map((s) => (
+                          <motion.div
+                            key={s.id}
+                            layout
+                            initial={{ opacity: 0, y: -8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="flex items-center gap-3 p-2 rounded-2xl bg-background/40"
+                          >
+                            <div className="w-11 h-11 rounded-xl bg-secondary overflow-hidden flex items-center justify-center shrink-0">
+                              {s.cover_url ? (
+                                <img src={s.cover_url} alt={s.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <Music className="w-4 h-4 text-primary" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold truncate">{s.title}</p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {s.artist} • from {s.username}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => void acceptSuggestion(s.id)}
+                              className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-95"
+                              aria-label="Play suggestion"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => dismissSuggestion(s.id)}
+                              className="w-9 h-9 rounded-full bg-secondary text-muted-foreground flex items-center justify-center active:scale-95"
+                              aria-label="Dismiss"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                )}
+
                 {/* Now playing */}
                 <div className="rounded-3xl border border-border bg-card/70 p-5">
                   <p className="text-xs text-muted-foreground mb-2">Now shared in this room</p>
