@@ -241,14 +241,27 @@ const Library = () => {
                 {loading ? (
                   <LibraryArtistsSkeleton />
                 ) : artists.length === 0 ? (
-                  <EmptyState icon={User} text="No artists yet" />
+                  <div className="text-center py-10">
+                    <div
+                      className="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <User className="w-7 h-7 text-muted-foreground/40" />
+                    </div>
+                    <p className="text-muted-foreground text-sm mb-3">No followed artists yet</p>
+                    <button
+                      onClick={() => navigate('/artists')}
+                      className="px-4 py-2 rounded-full text-xs font-semibold bg-primary/15 text-primary"
+                    >
+                      Discover artists
+                    </button>
+                  </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-3">
                     {artists.map((artist, i) => (
-                      <motion.button
-                        key={artist.id}
-                        className="flex flex-col items-center p-3 rounded-2xl active:scale-95 transition-transform"
-                        onClick={() => artist.id && navigate(`/artist/${artist.id}`)}
+                      <motion.div
+                        key={artist.name}
+                        className="relative flex flex-col items-center p-3 rounded-2xl"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.05 }}
@@ -257,21 +270,33 @@ const Library = () => {
                           border: '0.5px solid rgba(255,255,255,0.06)',
                         }}
                       >
-                        <div
-                          className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden mb-2"
-                          style={{
-                            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.2))',
-                            border: '1.5px solid rgba(255,255,255,0.08)',
-                          }}
+                        <button
+                          className="flex flex-col items-center w-full active:scale-95 transition-transform"
+                          onClick={() => navigate(`/artists?focus=${encodeURIComponent(artist.name)}`)}
                         >
-                          {artist.photoUrl ? (
-                            <img src={artist.photoUrl} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <User className="w-6 h-6 text-muted-foreground" />
-                          )}
-                        </div>
-                        <p className="text-xs font-medium text-center truncate w-full">{artist.name}</p>
-                      </motion.button>
+                          <div
+                            className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden mb-2"
+                            style={{
+                              background: 'linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.2))',
+                              border: '1.5px solid rgba(255,255,255,0.08)',
+                            }}
+                          >
+                            {artist.photoUrl ? (
+                              <img src={artist.photoUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            ) : (
+                              <User className="w-6 h-6 text-muted-foreground" />
+                            )}
+                          </div>
+                          <p className="text-xs font-medium text-center truncate w-full">{artist.name}</p>
+                        </button>
+                        <button
+                          aria-label={`Unfollow ${artist.name}`}
+                          onClick={(e) => { e.stopPropagation(); handleUnfollowArtist(artist.name); }}
+                          className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg"
+                        >
+                          <HeartIcon className="w-3 h-3 text-primary-foreground" fill="currentColor" />
+                        </button>
+                      </motion.div>
                     ))}
                   </div>
                 )}
