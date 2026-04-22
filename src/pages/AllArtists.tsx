@@ -1,48 +1,49 @@
 import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, User, Music, Loader2, Radio, Heart, Search as SearchIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, User, Music, Loader2, Radio, Heart, Search as SearchIcon, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlayer, Song } from '@/contexts/PlayerContext';
 import { searchIndexedTracks, resolveIndexedTrack, type IndexedTrack } from '@/lib/musicIndexer';
 import { getFeaturedIndexedArtists } from '@/lib/indexedArtists';
 import { followArtist, unfollowArtist, getUserArtistPrefs } from '@/lib/userArtistPrefs';
+import { CURATED_ARTISTS, ARTIST_CATEGORIES, type ArtistCategory } from '@/lib/curatedArtists';
 import BottomNav from '@/components/BottomNav';
 import MiniPlayer from '@/components/MiniPlayer';
 import FullscreenPlayer from '@/components/FullscreenPlayer';
 import { toast } from 'sonner';
 import { triggerHaptic } from '@/hooks/useHaptics';
 
-interface CatalogArtist {
-  id: string;
+interface ArtistEntry {
   name: string;
-  photo_url: string | null;
-  genre: string | null;
-  song_count: number;
-}
-
-interface StreamArtist {
-  name: string;
-  listeners: number;
   image_url?: string;
-  source: 'lastfm';
+  listeners?: number;
+  category: string;
+  source: 'catalog' | 'lastfm';
+  catalogId?: string;
 }
 
-const CatalogArtistCard = memo(({ artist }: { artist: CatalogArtist }) => {
-  const navigate = useNavigate();
-  return (
-    <motion.button
-      className="flex items-center gap-3 p-3 rounded-2xl w-full text-left active:scale-[0.98] transition-all"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}
-      onClick={() => { triggerHaptic('selection'); navigate(`/artist/${artist.id}`); }}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileTap={{ scale: 0.97 }}
+const ArtistRow = memo(({ artist, isFollowed, onFollow, onPlay, onOpen }: {
+  artist: ArtistEntry;
+  isFollowed: boolean;
+  onFollow: (artist: ArtistEntry) => void;
+  onPlay: (artist: ArtistEntry) => void;
+  onOpen: (artist: ArtistEntry) => void;
+}) => (
+  <motion.div
+    className="flex items-center gap-3 p-3 rounded-2xl"
+    style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+  >
+    <button
+      onClick={() => { triggerHaptic('selection'); onOpen(artist); }}
+      className="flex items-center gap-3 flex-1 min-w-0 text-left active:opacity-70"
     >
       <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-muted">
-        {artist.photo_url ? (
-          <img src={artist.photo_url} alt={artist.name} className="w-full h-full object-cover" loading="lazy" />
+        {artist.image_url ? (
+          <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" loading="lazy" referrerPolicy="no-referrer" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20">
             <User className="w-6 h-6 text-muted-foreground" />
@@ -51,115 +52,156 @@ const CatalogArtistCard = memo(({ artist }: { artist: CatalogArtist }) => {
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm truncate text-foreground">{artist.name}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{artist.song_count} {artist.song_count === 1 ? 'song' : 'songs'} · Catalog</p>
+        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+          {artist.category} · <span className="text-primary">{artist.source === 'catalog' ? 'Catalog' : 'Web Stream'}</span>
+        </p>
       </div>
-      {artist.genre && (
-        <span className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary font-medium flex-shrink-0">
-          {artist.genre}
-        </span>
-      )}
+    </button>
+    <motion.button
+      whileTap={{ scale: 0.85 }}
+      onClick={() => { triggerHaptic('impactLight'); onFollow(artist); }}
+      className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+      style={{
+        background: isFollowed ? 'hsl(var(--primary) / 0.18)' : 'rgba(255,255,255,0.06)',
+        border: `0.5px solid ${isFollowed ? 'hsl(var(--primary) / 0.4)' : 'rgba(255,255,255,0.10)'}`,
+      }}
+      aria-label={isFollowed ? 'Unfollow' : 'Follow'}
+    >
+      <Heart className={`w-4 h-4 ${isFollowed ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
     </motion.button>
-  );
-});
-CatalogArtistCard.displayName = 'CatalogArtistCard';
-
-const StreamArtistCard = memo(({ artist, onPlay }: { artist: StreamArtist; onPlay: (name: string) => void }) => (
-  <motion.button
-    className="flex items-center gap-3 p-3 rounded-2xl w-full text-left active:scale-[0.98] transition-all"
-    style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}
-    onClick={() => { triggerHaptic('selection'); onPlay(artist.name); }}
-    initial={{ opacity: 0, y: 8 }}
-    animate={{ opacity: 1, y: 0 }}
-    whileTap={{ scale: 0.97 }}
-  >
-    <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-muted">
-      {artist.image_url ? (
-        <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" loading="lazy" referrerPolicy="no-referrer" />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20">
-          <User className="w-6 h-6 text-muted-foreground" />
-        </div>
-      )}
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="font-semibold text-sm truncate text-foreground">{artist.name}</p>
-      <p className="text-xs text-muted-foreground mt-0.5">
-        {artist.listeners ? `${Math.round(artist.listeners / 1000)}k listeners` : 'Tap to explore'} · <span className="text-primary">Web Stream</span>
-      </p>
-    </div>
-    <Radio className="w-4 h-4 text-primary flex-shrink-0" />
-  </motion.button>
+  </motion.div>
 ));
-StreamArtistCard.displayName = 'StreamArtistCard';
+ArtistRow.displayName = 'ArtistRow';
 
 const AllArtists = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { playSong, currentSong, isPlaying } = usePlayer();
-  const [catalogArtists, setCatalogArtists] = useState<CatalogArtist[]>([]);
-  const [liveArtists, setLiveArtists] = useState<StreamArtist[]>([]);
-  const [artistSongs, setArtistSongs] = useState<IndexedTrack[]>([]);
-  const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
+  const [allArtists, setAllArtists] = useState<ArtistEntry[]>([]);
+  const [followed, setFollowed] = useState<Set<string>>(new Set());
+  const [activeCategory, setActiveCategory] = useState<'All' | ArtistCategory>('All');
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [artistSongs, setArtistSongs] = useState<IndexedTrack[]>([]);
+  const [selectedArtist, setSelectedArtist] = useState<ArtistEntry | null>(null);
   const [loadingSongs, setLoadingSongs] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
 
+  // Initial load: catalog artists + curated list + trending live artists + user follows
   useEffect(() => {
     const load = async () => {
       try {
-        const [artistsRes, songsRes] = await Promise.all([
-          supabase.from('artists').select('id, name, photo_url, genre'),
-          supabase.from('songs').select('artist_id').eq('is_visible', true).not('artist_id', 'is', null),
+        const [catalogRes, trendingRes, prefs] = await Promise.all([
+          supabase.from('artists').select('id, name, photo_url, genre').limit(100),
+          getFeaturedIndexedArtists(20).catch(() => []),
+          user ? getUserArtistPrefs(user.id).catch(() => []) : Promise.resolve([]),
         ]);
-        if (artistsRes.data && songsRes.data) {
-          const countMap = new Map<string, number>();
-          for (const s of songsRes.data) {
-            if (s.artist_id) countMap.set(s.artist_id, (countMap.get(s.artist_id) || 0) + 1);
-          }
-          const sorted = artistsRes.data
-            .map(a => ({ ...a, song_count: countMap.get(a.id) || 0 }))
-            .filter(a => a.song_count > 0)
-            .sort((a, b) => b.song_count - a.song_count);
-          setCatalogArtists(sorted);
+
+        const map = new Map<string, ArtistEntry>();
+
+        // 1) Catalog artists (highest priority — real images)
+        for (const a of catalogRes.data || []) {
+          map.set(a.name.toLowerCase(), {
+            name: a.name,
+            image_url: a.photo_url || undefined,
+            category: a.genre || 'Catalog',
+            source: 'catalog',
+            catalogId: a.id,
+          });
         }
 
-        const indexedArtists = await getFeaturedIndexedArtists(20);
-        setLiveArtists(indexedArtists.map((artist) => ({
-          name: artist.name,
-          listeners: artist.listeners || 0,
-          image_url: artist.image_url,
-          source: 'lastfm',
-        })));
+        // 2) Curated artists by category
+        for (const c of CURATED_ARTISTS) {
+          const key = c.name.toLowerCase();
+          if (!map.has(key)) {
+            map.set(key, { name: c.name, category: c.category, source: 'lastfm' });
+          }
+        }
+
+        // 3) Enrich with images from trending Last.fm data
+        for (const t of trendingRes) {
+          const key = t.name.toLowerCase();
+          const existing = map.get(key);
+          if (existing) {
+            if (!existing.image_url && t.image_url) existing.image_url = t.image_url;
+            if (t.listeners) existing.listeners = t.listeners;
+          } else {
+            map.set(key, {
+              name: t.name,
+              image_url: t.image_url,
+              listeners: t.listeners,
+              category: 'Trending',
+              source: 'lastfm',
+            });
+          }
+        }
+
+        setAllArtists(Array.from(map.values()));
+        setFollowed(new Set(prefs.map(p => p.artist_name.toLowerCase())));
       } catch (e) {
         console.error('Failed to load artists:', e);
-        try {
-          const indexedArtists = await getFeaturedIndexedArtists(20);
-          setLiveArtists(indexedArtists.map((artist) => ({
-            name: artist.name,
-            listeners: artist.listeners || 0,
-            image_url: artist.image_url,
-            source: 'lastfm',
-          })));
-        } catch (fallbackErr) {
-          console.error('Failed to load live artists:', fallbackErr);
-        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     load();
-  }, []);
+  }, [user]);
 
-  const handleStreamArtistPlay = useCallback(async (artistName: string) => {
-    setSelectedArtist(artistName);
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return allArtists.filter(a => {
+      if (activeCategory === 'Trending' && a.category !== 'Trending') return false;
+      if (activeCategory !== 'All' && activeCategory !== 'Trending' && a.category !== activeCategory) return false;
+      if (q && !a.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [allArtists, activeCategory, query]);
+
+  const handleFollow = useCallback(async (artist: ArtistEntry) => {
+    if (!user) {
+      toast.error('Sign in to follow artists');
+      return;
+    }
+    const key = artist.name.toLowerCase();
+    const isFollowed = followed.has(key);
+    // Optimistic
+    setFollowed(prev => {
+      const next = new Set(prev);
+      if (isFollowed) next.delete(key); else next.add(key);
+      return next;
+    });
+    const ok = isFollowed
+      ? await unfollowArtist(user.id, artist.name)
+      : await followArtist(user.id, artist.name, { image: artist.image_url || null, source: artist.source });
+    if (!ok) {
+      // rollback
+      setFollowed(prev => {
+        const next = new Set(prev);
+        if (isFollowed) next.add(key); else next.delete(key);
+        return next;
+      });
+      toast.error('Could not update. Please try again.');
+    } else {
+      toast.success(isFollowed ? `Unfollowed ${artist.name}` : `Following ${artist.name}`);
+    }
+  }, [user, followed]);
+
+  const handleOpenArtist = useCallback(async (artist: ArtistEntry) => {
+    if (artist.source === 'catalog' && artist.catalogId) {
+      navigate(`/artist/${artist.catalogId}`);
+      return;
+    }
+    setSelectedArtist(artist);
     setLoadingSongs(true);
     setArtistSongs([]);
     try {
-      const tracks = await searchIndexedTracks(artistName, 50);
+      const tracks = await searchIndexedTracks(artist.name, 50);
       setArtistSongs(tracks);
-    } catch (e) {
+    } catch {
       toast.error('Failed to load songs for this artist');
     }
     setLoadingSongs(false);
-  }, []);
+  }, [navigate]);
 
   const handlePlayTrack = useCallback(async (track: IndexedTrack) => {
     setResolvingId(track.id);
@@ -187,6 +229,8 @@ const AllArtists = () => {
     }
   }, [playSong, artistSongs]);
 
+  const categoriesWithAll = useMemo(() => ['All', ...ARTIST_CATEGORIES] as const, []);
+
   return (
     <div className="h-[100dvh] bg-background flex flex-col overflow-hidden relative">
       <header className="flex-shrink-0 z-30 px-4 pt-3 pb-3 safe-area-pt" style={{
@@ -195,21 +239,58 @@ const AllArtists = () => {
         borderBottom: '0.5px solid rgba(255,255,255,0.06)',
       }}>
         <div className="flex items-center gap-3">
-          <motion.button onClick={() => { triggerHaptic('impactLight'); navigate(-1); }}
+          <motion.button onClick={() => { triggerHaptic('impactLight'); selectedArtist ? setSelectedArtist(null) : navigate(-1); }}
             className="w-9 h-9 rounded-xl flex items-center justify-center"
             style={{ background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.10)' }}
             whileTap={{ scale: 0.85 }}>
             <ArrowLeft className="w-4 h-4" />
           </motion.button>
-          <h1 className="text-xl font-bold tracking-tight">
-            {selectedArtist ? selectedArtist : 'All Artists'}
+          <h1 className="text-xl font-bold tracking-tight truncate">
+            {selectedArtist ? selectedArtist.name : 'Discover Artists'}
           </h1>
         </div>
-        {selectedArtist && (
-          <button onClick={() => { setSelectedArtist(null); setArtistSongs([]); }}
-            className="mt-2 text-xs text-primary font-medium">
-            ← Back to all artists
-          </button>
+
+        {!selectedArtist && (
+          <>
+            {/* Search */}
+            <div className="mt-3 relative">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search artists..."
+                className="w-full h-10 pl-9 pr-9 rounded-xl bg-white/5 border border-white/10 text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/40"
+              />
+              {query && (
+                <button onClick={() => setQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Category chips */}
+            <div className="mt-3 -mx-4 px-4 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 w-max">
+                {categoriesWithAll.map(cat => {
+                  const active = activeCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => { triggerHaptic('selection'); setActiveCategory(cat as any); }}
+                      className="px-3 h-8 rounded-full text-xs font-semibold whitespace-nowrap transition-all"
+                      style={{
+                        background: active ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.06)',
+                        color: active ? 'hsl(var(--primary-foreground))' : 'hsl(var(--foreground))',
+                        border: `0.5px solid ${active ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.10)'}`,
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </>
         )}
       </header>
 
@@ -259,29 +340,25 @@ const AllArtists = () => {
               })
             )}
           </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-muted-foreground py-12 text-sm">
+            No artists match your search.
+          </p>
         ) : (
-          <div className="space-y-4">
-            {catalogArtists.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bold mb-3 flex items-center gap-1.5">
-                  <Music className="w-4 h-4 text-primary" /> Catalog Artists · {catalogArtists.length}
-                </h2>
-                <div className="space-y-1.5">
-                  {catalogArtists.map(a => <CatalogArtistCard key={a.id} artist={a} />)}
-                </div>
-              </div>
-            )}
-
-            {liveArtists.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bold mb-3 flex items-center gap-1.5">
-                  <Radio className="w-4 h-4 text-primary" /> Live Artists · {liveArtists.length}
-                </h2>
-                <div className="space-y-1.5">
-                  {liveArtists.map((artist) => <StreamArtistCard key={artist.name} artist={artist} onPlay={handleStreamArtistPlay} />)}
-                </div>
-              </div>
-            )}
+          <div className="space-y-1.5">
+            <p className="text-[11px] text-muted-foreground px-1 mb-1">
+              {filtered.length} artists · Tap heart to follow
+            </p>
+            {filtered.map(a => (
+              <ArtistRow
+                key={a.name}
+                artist={a}
+                isFollowed={followed.has(a.name.toLowerCase())}
+                onFollow={handleFollow}
+                onPlay={handleOpenArtist}
+                onOpen={handleOpenArtist}
+              />
+            ))}
           </div>
         )}
       </main>

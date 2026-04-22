@@ -21,16 +21,19 @@ import SEOHead from "./components/SEOHead";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
-// Lazy load all non-critical routes
-const Home = lazy(() => import("./pages/Home"));
-const Search = lazy(() => import("./pages/Search"));
-const Library = lazy(() => import("./pages/Library"));
+// Eager load main tabs for INSTANT navigation (Spotify-like feel).
+// Admin and rarely-visited pages stay lazy below.
+import Home from "./pages/Home";
+import Search from "./pages/Search";
+import Library from "./pages/Library";
+import Profile from "./pages/Profile";
+import OfflinePlayerShell from "./components/OfflinePlayerShell";
+
+// These are visited less often — keep lazy to keep initial bundle small.
 const PlaylistDetail = lazy(() => import("./pages/PlaylistDetail"));
 const ArtistDetail = lazy(() => import("./pages/ArtistDetail"));
-const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Support = lazy(() => import("./pages/Support"));
-import OfflinePlayerShell from "./components/OfflinePlayerShell";
 const Offline = lazy(() => import("./pages/Offline"));
 const PlayWithMate = lazy(() => import("./pages/PlayWithMate"));
 const AllArtists = lazy(() => import("./pages/AllArtists"));
@@ -77,10 +80,12 @@ const AdminSongRequests = lazy(() => import("./pages/admin/SongRequests"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 2 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
     },
   },
 });
