@@ -45,8 +45,6 @@ const moods = [
 
 type SearchSource = 'all' | 'library' | 'indexer';
 
-type SearchSource = 'all' | 'library' | 'indexer';
-
 // Helper: dedupe + interleave indexed tracks across multiple queries
 async function searchMultiQuery(queries: string[], perQuery = 15): Promise<IndexedTrack[]> {
   const results = await Promise.all(
@@ -90,7 +88,7 @@ const Search = () => {
   const [activeFilter, setActiveFilter] = useState<{ type: 'genre' | 'mood'; value: string } | null>(null);
   const [source, setSource] = useState<SearchSource>('all');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
-  const [searchHistory, setSearchHistory] = useState<string[]>(getSearchHistory());
+  const [searchHistory, setSearchHistory] = useState<SongHistoryEntry[]>(() => getSongHistory());
   const { playSong, currentSong, isPlaying } = usePlayer();
   const { getDownloadedUrl } = useDownloads();
 
@@ -124,10 +122,6 @@ const Search = () => {
       setSearching(true);
       setActiveFilter(null);
 
-      // Save to search history
-      addToSearchHistory(trimmedQuery);
-      setSearchHistory(getSearchHistory());
-
       const [libraryResponse, indexedResponse] = await Promise.allSettled([
         searchSongs(trimmedQuery),
         searchIndexedTracks(trimmedQuery, 50),
@@ -138,6 +132,8 @@ const Search = () => {
       setResults(libraryResponse.status === 'fulfilled' ? libraryResponse.value : []);
       setIndexedResults(indexedResponse.status === 'fulfilled' ? indexedResponse.value : []);
       setSearching(false);
+      // Refresh history snapshot (current play might have been added)
+      setSearchHistory(getSongHistory());
     }, 300);
 
     return () => {
@@ -198,21 +194,32 @@ const Search = () => {
 
   const searchByGenre = async (genre: string) => {
     setQuery(''); setActiveFilter({ type: 'genre', value: genre }); setSearching(true); setIndexedResults([]);
-    const { data } = await supabase.from('songs').select('*, artists(id, name, photo_url)')
-      .eq('is_visible', true).ilike('genre', `%${genre}%`).limit(20);
-    if (data) {
-      setResults(data.map(mapSongRow));
+    // Catalog + Streaming in parallel
+    const queries = GENRE_QUERIES[genre] || [genre];
+    const [catalogRes, streamRes] = await Promise.allSettled([
+      supabase.from('songs').select('*, artists(id, name, photo_url)')
+        .eq('is_visible', true).ilike('genre', `%${genre}%`).limit(30),
+      searchMultiQuery(queries, 12),
+    ]);
+    if (catalogRes.status === 'fulfilled' && catalogRes.value.data) {
+      setResults(catalogRes.value.data.map(mapSongRow));
     }
+    if (streamRes.status === 'fulfilled') setIndexedResults(streamRes.value);
     setSearching(false);
   };
 
   const searchByMood = async (mood: string) => {
     setQuery(''); setActiveFilter({ type: 'mood', value: mood }); setSearching(true); setIndexedResults([]);
-    const { data } = await supabase.from('songs').select('*, artists(id, name, photo_url)')
-      .eq('is_visible', true).ilike('mood', `%${mood}%`).limit(20);
-    if (data) {
-      setResults(data.map(mapSongRow));
+    const queries = MOOD_QUERIES[mood] || [mood];
+    const [catalogRes, streamRes] = await Promise.allSettled([
+      supabase.from('songs').select('*, artists(id, name, photo_url)')
+        .eq('is_visible', true).ilike('mood', `%${mood}%`).limit(30),
+      searchMultiQuery(queries, 12),
+    ]);
+    if (catalogRes.status === 'fulfilled' && catalogRes.value.data) {
+      setResults(catalogRes.value.data.map(mapSongRow));
     }
+    if (streamRes.status === 'fulfilled') setIndexedResults(streamRes.value);
     setSearching(false);
   };
 
