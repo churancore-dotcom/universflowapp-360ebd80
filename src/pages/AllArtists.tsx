@@ -1,12 +1,18 @@
-import { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { useState, useEffect, useCallback, memo, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Music, Loader2, Radio, Heart, Search as SearchIcon, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlayer, Song } from '@/contexts/PlayerContext';
-import { searchIndexedTracks, resolveIndexedTrack, type IndexedTrack } from '@/lib/musicIndexer';
-import { getFeaturedIndexedArtists } from '@/lib/indexedArtists';
+import {
+  searchIndexedTracks,
+  resolveIndexedTrack,
+  searchArtistDirectory,
+  getTopArtistsByTag,
+  enrichArtistImages,
+  type IndexedTrack,
+} from '@/lib/musicIndexer';
 import { followArtist, unfollowArtist, getUserArtistPrefs } from '@/lib/userArtistPrefs';
 import { CURATED_ARTISTS, ARTIST_CATEGORIES, type ArtistCategory } from '@/lib/curatedArtists';
 import BottomNav from '@/components/BottomNav';
