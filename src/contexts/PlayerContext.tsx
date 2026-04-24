@@ -244,6 +244,34 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const youtubeActiveRef = useRef(false);
   const youtubeEndCallbackRef = useRef<(() => void) | null>(null);
 
+  // ── Persist queue across reloads ──
+  useEffect(() => {
+    if (queueRestoredRef.current) return;
+    queueRestoredRef.current = true;
+    try {
+      const raw = localStorage.getItem('player_queue_state');
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { queue: Song[]; index: number; song: Song | null };
+      if (Array.isArray(saved.queue) && saved.queue.length > 0) {
+        setQueueState(saved.queue);
+        setCurrentIndex(Math.max(0, Math.min(saved.index || 0, saved.queue.length - 1)));
+        if (saved.song) setCurrentSong(saved.song);
+      }
+    } catch { /* ignore corrupt cache */ }
+  }, []);
+
+  useEffect(() => {
+    if (!queueRestoredRef.current) return;
+    try {
+      const trimmed = queue.slice(0, 100);
+      localStorage.setItem('player_queue_state', JSON.stringify({
+        queue: trimmed,
+        index: Math.min(currentIndex, trimmed.length - 1),
+        song: currentSong,
+      }));
+    } catch { /* quota or disabled */ }
+  }, [queue, currentIndex, currentSong]);
+
   // Check premium status on mount
   useEffect(() => {
     const checkStatus = async () => {
