@@ -172,6 +172,54 @@ export async function resolveIndexedTrack(artist: string, title: string): Promis
   if (existing) return existing;
 
   const pending = (async () => {
+    // FAST PATH: try DB cache first (shared across all users, ~80ms)
+    // before falling back to the slow Invidious resolver (~1-2s).
+    const dbHit = await tryDbCachedStream(artist, title);
+    if (dbHit?.streamUrl) {
+      setCachedStream(cacheKey, dbHit.streamUrl, {
+        title: dbHit.title,
+        artist: dbHit.artist,
+        cover_url: dbHit.cover_url,
+        duration: dbHit.duration,
+      });
+      return dbHit;
+    }
+
+    return await resolveViaEdgeFunction(artist, title, cacheKey);
+  })().finally(() => {
+    inFlightResolutions.delete(cacheKey);
+  });
+
+  inFlightResolutions.set(cacheKey, pending);
+  return pending;
+}
+
+async function resolveViaEdgeFunction(artist: string, title: string, cacheKey: string): Promise<ResolveTrackResponse> {
+  const result = await requestIndexer<ResolveTrackResponse>({
+    action: 'resolve',
+    artist,
+    title,
+  });
+
+  if (!result?.success || !result.streamUrl) {
+    throw new Error(result?.error || 'Could not find a playable stream for this track');
+  }
+
+  setCachedStream(cacheKey, result.streamUrl, {
+    title: result.title,
+    artist: result.artist,
+    cover_url: result.cover_url,
+    duration: result.duration,
+    videoId: result.videoId,
+  });
+
+  return result;
+}
+
+// Removed legacy duplicate — kept above as the unified pending block.
+function _removed_legacy() {
+
+  const pending = (async () => {
     const result = await requestIndexer<ResolveTrackResponse>({
       action: 'resolve',
       artist,
