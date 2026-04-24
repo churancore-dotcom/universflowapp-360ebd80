@@ -11,7 +11,8 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const STREAM_DB_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
-let _adminClient: ReturnType<typeof createClient> | null = null;
+// deno-lint-ignore no-explicit-any
+let _adminClient: any = null;
 function getAdminClient() {
   if (!_adminClient && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     _adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
