@@ -166,19 +166,68 @@ const Support = () => {
               <Star className="w-5 h-5 text-primary" />
               Our Supporters
             </h3>
-            <div className="rounded-2xl p-6 text-center bg-card border border-border/50">
-              <p className="text-muted-foreground mb-4">
-                Thank you to everyone who supports Universflow!
-              </p>
-              <div className="flex justify-center gap-2 flex-wrap">
-                {['💜', '🎵', '🎧', '✨', '🌟'].map((emoji, i) => (
-                  <motion.span
-                    key={i} initial={{ scale: 0 }} animate={{ scale: 1 }}
-                    transition={{ delay: 0.3 + i * 0.05 }} className="text-2xl"
-                  >
-                    {emoji}
-                  </motion.span>
-                ))}
+            <div
+              className="relative rounded-3xl p-6 overflow-hidden"
+              style={{
+                background:
+                  'linear-gradient(135deg, hsl(var(--primary) / 0.18), hsl(var(--accent) / 0.12) 60%, hsl(var(--primary) / 0.05))',
+                border: '1px solid hsl(var(--primary) / 0.25)',
+                boxShadow: '0 20px 60px -20px hsl(var(--primary) / 0.45)',
+              }}
+            >
+              <div
+                className="absolute -top-12 -right-12 w-44 h-44 rounded-full opacity-30 blur-3xl"
+                style={{ background: 'hsl(var(--primary))' }}
+              />
+              <div
+                className="absolute -bottom-16 -left-10 w-40 h-40 rounded-full opacity-20 blur-3xl"
+                style={{ background: 'hsl(var(--accent))' }}
+              />
+
+              <div className="relative text-center">
+                <motion.div
+                  initial={{ scale: 0, rotate: -20 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ ...iosSpring, delay: 0.3 }}
+                  className="w-16 h-16 mx-auto mb-3 rounded-2xl flex items-center justify-center text-3xl"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
+                    boxShadow: '0 10px 30px -10px hsl(var(--primary) / 0.6)',
+                  }}
+                >
+                  💜
+                </motion.div>
+                <h4 className="text-xl font-bold mb-1">
+                  {user
+                    ? `You're a legend${user.email ? `, ${user.email.split('@')[0]}` : ''}!`
+                    : 'You are the heartbeat of Universflow'}
+                </h4>
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                  Every play, every share, every kind word — it all keeps this
+                  app alive. From the bottom of our hearts: <span className="text-foreground font-semibold">thank you</span> for
+                  being part of the journey. 🎶
+                </p>
+
+                <div className="flex justify-center gap-2 flex-wrap mt-5">
+                  {['💜', '🎵', '🎧', '✨', '🌟', '🚀', '🙏'].map((emoji, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ scale: 0, y: 10 }}
+                      animate={{ scale: 1, y: 0 }}
+                      transition={{ delay: 0.35 + i * 0.04, type: 'spring', stiffness: 300 }}
+                      className="text-2xl"
+                    >
+                      {emoji}
+                    </motion.span>
+                  ))}
+                </div>
+
+                {isPremium && (
+                  <p className="mt-5 text-xs font-semibold text-primary inline-flex items-center gap-1.5">
+                    <Crown className="w-3.5 h-3.5" />
+                    Premium supporter — VIP status unlocked
+                  </p>
+                )}
               </div>
             </div>
           </motion.section>

@@ -74,32 +74,42 @@ const Profile = () => {
 
   const handleSaveUsername = async () => {
     if (!user || !newUsername.trim()) return;
-    
+
     if (newUsername.trim().length < 3) {
       toast.error('Username must be at least 3 characters');
       return;
     }
-    
+
     if (newUsername.trim().length > 20) {
       toast.error('Username must be less than 20 characters');
       return;
     }
-    
+
+    if (profileData.username_changed) {
+      toast.error('You can only change your username once');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Set your username to "${newUsername.trim()}"?\n\nThis can only be done once and cannot be changed later.`
+    );
+    if (!confirmed) return;
+
     setIsSaving(true);
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           username: newUsername.trim(),
           username_changed: true,
         })
         .eq('user_id', user.id);
-      
+
       if (error) throw error;
-      
+
       setProfileData(prev => ({ ...prev, username: newUsername.trim(), username_changed: true }));
       setIsEditingUsername(false);
-      toast.success('Username updated!');
+      toast.success('Username set! This cannot be changed again.');
     } catch (error: any) {
       toast.error(error.message || 'Failed to update username');
     } finally {
@@ -113,7 +123,7 @@ const Profile = () => {
   };
 
   const displayName = profileData.username || user?.email?.split('@')[0] || 'User';
-  const canChangeUsername = true; // Users can change anytime now
+  const canChangeUsername = !profileData.username_changed;
 
   return (
     <TabTransition>
@@ -213,8 +223,12 @@ const Profile = () => {
                   <Mail className="w-3 h-3" />
                   {user?.email}
                 </p>
-                {!isEditingUsername && profileData.username && (
-                  <p className="text-[10px] text-muted-foreground/60 mt-0.5">Tap pencil to change name</p>
+                {!isEditingUsername && (
+                  <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                    {profileData.username_changed
+                      ? 'Username is locked (can only be set once)'
+                      : 'Tap pencil to set your username (one-time only)'}
+                  </p>
                 )}
                 {isAdmin && (
                   <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: 'hsl(211 100% 50% / 0.2)', color: 'hsl(211 100% 60%)' }}>
