@@ -357,27 +357,35 @@ const Home = () => {
                 </motion.div>
               )}
 
-              {/* Featured / Your Artists */}
-              <FeaturedArtistsSection />
+              {/* Online-only discovery sections — hidden when offline */}
+              {!isOffline && (
+                <>
+                  {/* Featured / Your Artists */}
+                  <FeaturedArtistsSection />
 
-              {/* Made For You — personalized from picked artists */}
-              <MadeForYouSection />
+                  {/* Made For You — personalized from picked artists */}
+                  <MadeForYouSection />
 
-              {/* Global Top Tracks */}
-              <GlobalTopTracksSection />
+                  {/* Global Top Tracks */}
+                  <GlobalTopTracksSection />
 
-              {/* New Releases */}
-              {newReleases.length > 0 && (
-                <HorizontalSection title="New Releases" subtitle="Fresh tracks just dropped" songs={newReleases}>
-                  {newReleases.map((song, i) => (
-                    <SongCard key={song.id} song={song} index={i} sectionSongs={newReleases} />
-                  ))}
-                </HorizontalSection>
+                  {/* New Releases */}
+                  {newReleases.length > 0 && (
+                    <HorizontalSection title="New Releases" subtitle="Fresh tracks just dropped" songs={newReleases}>
+                      {newReleases.map((song, i) => (
+                        <SongCard key={song.id} song={song} index={i} sectionSongs={newReleases} />
+                      ))}
+                    </HorizontalSection>
+                  )}
+                </>
               )}
 
-              {/* All Songs */}
+              {/* All Songs (offline → renders ONLY downloaded tracks) */}
               {allSongs.length > 0 && (
-                <AllSongsSection songs={allSongs} />
+                <AllSongsSection
+                  songs={allSongs}
+                  title={isOffline ? 'Downloaded' : undefined}
+                />
               )}
 
             </div>
