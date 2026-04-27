@@ -34,32 +34,16 @@ const mapSongRow = (s: any): Song => ({
 });
 
 const Search = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Song[]>([]);
   const [indexedResults, setIndexedResults] = useState<IndexedTrack[]>([]);
   const [searching, setSearching] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<{ type: 'genre' | 'mood'; value: string } | null>(null);
   const [source, setSource] = useState<SearchSource>('all');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [searchHistory, setSearchHistory] = useState<SongHistoryEntry[]>(() => getSongHistory());
   const { playSong, currentSong, isPlaying } = usePlayer();
   const { getDownloadedUrl } = useDownloads();
-
-  useEffect(() => {
-    const genre = searchParams.get('genre');
-    const mood = searchParams.get('mood');
-    if (genre) {
-      setActiveFilter({ type: 'genre', value: genre });
-      searchByGenre(genre);
-      setSearchParams({});
-    } else if (mood) {
-      setActiveFilter({ type: 'mood', value: mood });
-      searchByMood(mood);
-      setSearchParams({});
-    }
-  }, [searchParams]);
 
   // Refresh history snapshot whenever the currently playing song changes
   useEffect(() => {
