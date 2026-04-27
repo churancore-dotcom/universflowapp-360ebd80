@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search as SearchIcon, Music, X, Tag, Sparkles, Globe, Radio, Loader2, Clock, Trash2 } from 'lucide-react';
+import { Search as SearchIcon, Music, X, Globe, Radio, Loader2, Clock, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePlayer, Song } from '@/contexts/PlayerContext';
 import { useDownloads } from '@/contexts/DownloadContext';
@@ -16,53 +15,11 @@ import {
   getSongHistory,
   removeSongFromHistory,
   clearSongHistory,
-  MOOD_QUERIES,
-  GENRE_QUERIES,
   type SongHistoryEntry,
 } from '@/lib/songHistory';
 import { toast } from 'sonner';
 
-const genres = [
-  { name: 'Pop', color: 'from-pink-500 to-rose-500', icon: '🎤' },
-  { name: 'Rock', color: 'from-red-500 to-orange-500', icon: '🎸' },
-  { name: 'Hip Hop', color: 'from-yellow-500 to-amber-500', icon: '🎧' },
-  { name: 'R&B', color: 'from-purple-500 to-violet-500', icon: '💜' },
-  { name: 'Electronic', color: 'from-cyan-500 to-blue-500', icon: '🎹' },
-  { name: 'Jazz', color: 'from-amber-600 to-yellow-600', icon: '🎷' },
-];
-
-const moods = [
-  { name: 'Chill', color: 'from-sky-400 to-cyan-500', icon: '😌' },
-  { name: 'Energetic', color: 'from-orange-400 to-red-500', icon: '⚡' },
-  { name: 'Romantic', color: 'from-pink-400 to-rose-500', icon: '💕' },
-  { name: 'Focus', color: 'from-violet-500 to-purple-600', icon: '🎯' },
-  { name: 'Sad', color: 'from-slate-500 to-slate-700', icon: '😢' },
-  { name: 'Happy', color: 'from-yellow-400 to-amber-500', icon: '😊' },
-  { name: 'Party', color: 'from-fuchsia-500 to-pink-500', icon: '🎉' },
-];
-
 type SearchSource = 'all' | 'library' | 'indexer';
-
-// Helper: dedupe + interleave indexed tracks across multiple queries
-async function searchMultiQuery(queries: string[], perQuery = 15): Promise<IndexedTrack[]> {
-  const results = await Promise.all(
-    queries.map(q => searchIndexedTracks(q, perQuery).catch(() => [] as IndexedTrack[]))
-  );
-  const seen = new Set<string>();
-  const out: IndexedTrack[] = [];
-  // Round-robin interleave so first results from each query appear early
-  const max = Math.max(...results.map(r => r.length), 0);
-  for (let i = 0; i < max; i++) {
-    for (const list of results) {
-      const t = list[i];
-      if (t && !seen.has(t.id)) {
-        seen.add(t.id);
-        out.push(t);
-      }
-    }
-  }
-  return out;
-}
 
 const mapSongRow = (s: any): Song => ({
   id: s.id,
