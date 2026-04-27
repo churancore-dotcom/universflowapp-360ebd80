@@ -284,15 +284,8 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
           const applyOnReady = () => {
             try {
               if (remotePosition > 0) seek(remotePosition);
-              if (payload.isPlaying) {
-                const p = play();
-                // Some browsers return a promise; swallow autoplay errors silently.
-                if (p && typeof (p as any).catch === 'function') {
-                  (p as Promise<void>).catch(() => { /* autoplay blocked */ });
-                }
-              } else {
-                pause();
-              }
+              if (payload.isPlaying) play();
+              else pause();
             } finally {
               clearFlag();
             }
