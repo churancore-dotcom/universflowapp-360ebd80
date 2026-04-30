@@ -71,8 +71,29 @@ public class NowPlayingWidget extends AppWidgetProvider {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.setData(Uri.parse("universflow://widget-action?action=" + action));
         intent.putExtra("widget_action", action);
-        return PendingIntent.getActivity(context, requestCode, 
+        return PendingIntent.getActivity(context, requestCode,
             intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    /**
+     * Sends transport-control intents directly to MediaNotificationService so widget
+     * buttons work even when the app UI isn't open. Resolved via Class.forName because
+     * the service lives in the appId-derived "<pkg>.media" subpackage that's only
+     * known at build time (injected by build-android.yml).
+     */
+    private static PendingIntent createMediaServiceIntent(Context context, String action, int requestCode) {
+        String pkg = context.getPackageName();
+        Intent intent;
+        try {
+            Class<?> svc = Class.forName(pkg + ".media.MediaNotificationService");
+            intent = new Intent(context, svc).setAction(action);
+        } catch (ClassNotFoundException e) {
+            // Fallback: explicit component by name (still resolvable by the OS)
+            intent = new Intent(action).setComponent(
+                new android.content.ComponentName(pkg, pkg + ".media.MediaNotificationService"));
+        }
+        return PendingIntent.getService(context, requestCode, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     @Override
