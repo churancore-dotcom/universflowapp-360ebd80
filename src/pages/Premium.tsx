@@ -225,8 +225,13 @@ const PremiumPage = memo(function PremiumPage() {
             </motion.section>
           )}
 
+          {/* Pending payment — live progress (shown when user has a pending request) */}
+          {!isPremium && pending && (
+            <PendingProgressBanner pending={pending} />
+          )}
+
           {/* Plan selector */}
-          {!isPremium && (
+          {!isPremium && !pending && (
             <motion.section
               initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
               transition={{ ...iosSpring, delay: 0.15 }}
