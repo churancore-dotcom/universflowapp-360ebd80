@@ -376,6 +376,31 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
 
+    // Native app resume — only fires inside Capacitor APK. Web preview ignores.
+    let appResumeRemove: (() => void) | null = null;
+    (async () => {
+      try {
+        const mod: any = await import('@capacitor/app').catch(() => null);
+        if (!mod?.App) return;
+        const handle = await mod.App.addListener('appStateChange', (state: { isActive: boolean }) => {
+          if (!state?.isActive) return;
+          // Returning to foreground from native background:
+          // 1) clear any stale 'error' UI state by re-checking the audio element
+          // 2) resume if we were playing
+          const a = audioRef.current;
+          if (!a) return;
+          // If readyState dropped below HAVE_CURRENT_DATA, re-prime by reassigning currentTime
+          if (a.src && a.readyState < 2) {
+            try { a.currentTime = a.currentTime; } catch {}
+          }
+          if (wasPlayingRef.current && a.src && a.paused) {
+            a.play().catch(() => {});
+          }
+        });
+        appResumeRemove = () => { try { handle.remove?.(); } catch {} };
+      } catch {}
+    })();
+
     return () => {
       audio.removeEventListener('waiting', handleWaiting);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
