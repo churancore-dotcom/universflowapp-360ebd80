@@ -172,8 +172,7 @@ const AnimatedRoutes = () => {
           <Route path="/artists" element={<ProtectedRoute><AllArtists /></ProtectedRoute>} />
           <Route path="/subscription" element={<ProtectedRoute><ManageSubscription /></ProtectedRoute>} />
           <Route path="/premium" element={<ProtectedRoute><Premium /></ProtectedRoute>} />
-          <Route path="/rewind" element={<ProtectedRoute><Wrapped /></ProtectedRoute>} />
-          
+
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index element={<AdminDashboard />} />
             <Route path="upload" element={<UploadMusic />} />
