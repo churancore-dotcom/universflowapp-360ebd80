@@ -433,7 +433,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         clearInterval(crossfadeIntervalRef.current);
       }
       if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+        window.clearInterval(animationFrameRef.current);
       }
     };
   }, []);
@@ -809,16 +809,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (nextIdx !== null && queue.length > 0) {
         const nextSong = queue[nextIdx];
         
-        // Check premium and show end-of-song ad for non-premium
-        if (!isPremiumUser && songsPlayedSinceAd >= AD_FREQUENCY - 1) {
-          setPendingSong({ song: nextSong, offlineUrl: null, songsQueue: queue });
-          setAdType('end');
-          setShowPrerollAd(true);
-          setSongsPlayedSinceAd(0);
-          return;
-        }
-        
-        setSongsPlayedSinceAd(prev => prev + 1);
         // Play next song immediately without any async delay
         playSongAtIndex(nextIdx, queue);
       } else if (repeat === 'off' && queue.length > 0) {
@@ -895,7 +885,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('error', handleAudioError);
     };
-  }, [currentIndex, queue, shuffle, repeat, crossfade, crossfadeDuration, getNextIndex, playSongAtIndex, isPremiumUser, songsPlayedSinceAd]);
+  }, [currentIndex, queue, shuffle, repeat, crossfade, crossfadeDuration, getNextIndex, playSongAtIndex]);
 
   // Crossfade implementation
   const startCrossfade = useCallback(() => {
