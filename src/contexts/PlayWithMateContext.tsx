@@ -527,21 +527,21 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
     const syncTimer = window.setTimeout(() => {
       void broadcastPlaybackState();
       void persistSessionState(room.sessionId);
-    }, 120);
+    }, 180);
 
     return () => window.clearTimeout(syncTimer);
-  }, [broadcastPlaybackState, currentSong?.audio_url, currentSong?.id, isPlaying, persistSessionState, progress, room?.role, room?.sessionId]);
+  }, [broadcastPlaybackState, currentSong?.audio_url, currentSong?.id, isPlaying, persistSessionState, room?.role, room?.sessionId]);
 
   useEffect(() => {
     if (room?.role !== 'host' || !room.sessionId) return;
 
     broadcastIntervalRef.current = window.setInterval(() => {
       void broadcastPlaybackState();
-    }, 800);
+    }, 2000);
 
     persistIntervalRef.current = window.setInterval(() => {
       void persistSessionState(room.sessionId);
-    }, 2200);
+    }, 10000);
 
     return () => {
       if (broadcastIntervalRef.current) {
