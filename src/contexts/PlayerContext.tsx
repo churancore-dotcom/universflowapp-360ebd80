@@ -113,6 +113,12 @@ const configureAudioElementSource = (audio: HTMLAudioElement, sourceUrl: string)
 // Hosts that already deliver proper CORS headers — safe to play & EQ-process directly
 const DIRECT_PLAYABLE_HOST_SNIPPETS = [
   'supabase.co',
+  'private.coffee',
+  'piped.video',
+  'piped.privacydev.net',
+  'piped.kavin.rocks',
+  'piped.adminforge.de',
+  'tokhmi.xyz',
 ];
 
 const shouldProxyStreamUrl = (sourceUrl: string) => {
@@ -445,22 +451,24 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useGlobalAudioEngine(audioElement);
 
 
-  // Progress update loop using requestAnimationFrame for smooth updates
+  // Throttled progress loop. Updating React state every animation frame was
+  // making the whole app feel laggy while music played.
   useEffect(() => {
     const updateProgress = () => {
       if (audioRef.current && !audioRef.current.paused && !isCrossfading.current) {
-        setProgress(audioRef.current.currentTime);
+        const next = audioRef.current.currentTime;
+        setProgress((prev) => (Math.abs(prev - next) > 0.2 ? next : prev));
       }
-      animationFrameRef.current = requestAnimationFrame(updateProgress);
     };
 
     if (isPlaying) {
-      animationFrameRef.current = requestAnimationFrame(updateProgress);
+      updateProgress();
+      animationFrameRef.current = window.setInterval(updateProgress, 250);
     }
 
     return () => {
       if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+        window.clearInterval(animationFrameRef.current);
       }
     };
   }, [isPlaying]);
