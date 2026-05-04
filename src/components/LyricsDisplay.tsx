@@ -42,7 +42,8 @@ const SAMPLE_LYRICS: Record<string, string[]> = {
 };
 
 const LyricsDisplay = ({ isOpen, onClose }: LyricsDisplayProps) => {
-  const { currentSong, progress, duration, isPlaying } = usePlayer();
+  const { currentSong, isPlaying } = usePlayer();
+  const { progress, duration } = usePlayerProgress();
   const [lyrics, setLyrics] = useState<string[]>([]);
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
   const [loading, setLoading] = useState(false);
