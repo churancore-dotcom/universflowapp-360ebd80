@@ -28,14 +28,13 @@ const MiniPlayer = memo(function MiniPlayer() {
   const {
     currentSong,
     isPlaying,
-    progress,
-    duration,
     togglePlay,
     nextSong,
     prevSong,
     stopSong,
     setExpanded
   } = usePlayer();
+  const { progress, duration } = usePlayerProgress();
 
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
