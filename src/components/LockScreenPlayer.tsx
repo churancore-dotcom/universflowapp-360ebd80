@@ -61,10 +61,11 @@ const useWakeLock = (enabled: boolean) => {
 
 const LockScreenPlayer = ({ isOpen, onClose }: LockScreenPlayerProps) => {
   const {
-    currentSong, isPlaying, progress, duration, volume,
+    currentSong, isPlaying, volume,
     shuffle, repeat, togglePlay, nextSong, prevSong,
     setVolume, toggleShuffle, toggleRepeat, seek,
   } = usePlayer();
+  const { progress, duration } = usePlayerProgress();
 
   const [time, setTime] = useState(new Date());
   const dragY = useMotionValue(0);
