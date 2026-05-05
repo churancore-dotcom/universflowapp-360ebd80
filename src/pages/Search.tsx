@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search as SearchIcon, Music, X, Globe, Radio, Loader2, Clock, Trash2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { usePlayer, Song } from '@/contexts/PlayerContext';
 import { useDownloads } from '@/contexts/DownloadContext';
 import BottomNav from '@/components/BottomNav';
@@ -18,25 +17,11 @@ import {
   clearSongHistory,
   type SongHistoryEntry,
 } from '@/lib/songHistory';
-import { getCached, setCached } from '@/lib/searchCache';
 
 type SearchSource = 'all' | 'indexer';
 
-const mapSongRow = (s: any): Song => ({
-  id: s.id,
-  title: s.title,
-  artist: s.artist,
-  album: s.album || undefined,
-  cover_url: s.cover_url || undefined,
-  audio_url: s.audio_url,
-  artist_id: (s.artists as any)?.id || s.artist_id || undefined,
-  artist_photo_url: (s.artists as any)?.photo_url || undefined,
-  source: 'library',
-});
-
 const Search = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Song[]>([]);
   const [indexedResults, setIndexedResults] = useState<IndexedTrack[]>([]);
   const [searching, setSearching] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
