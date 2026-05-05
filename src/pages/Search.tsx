@@ -187,7 +187,6 @@ const Search = () => {
               {([
                 { key: 'all' as SearchSource, label: 'All Songs', icon: Globe },
                 { key: 'indexer' as SearchSource, label: 'Worldwide', icon: Radio },
-                { key: 'library' as SearchSource, label: 'Your Library', icon: Music },
               ]).map(tab => (
                 <motion.button key={tab.key} onClick={() => setSource(tab.key)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0"
@@ -286,7 +285,7 @@ const Search = () => {
                             <button
                               onClick={() => {
                                 removeSongFromHistory(entry.id);
-                                setSearchHistory(getSongHistory());
+                                setSearchHistory(getSongHistory().filter(item => !isCatalogSongId(item.id)));
                               }}
                               className="w-7 h-7 flex items-center justify-center rounded-full text-muted-foreground active:bg-white/10"
                               aria-label="Remove from history"
