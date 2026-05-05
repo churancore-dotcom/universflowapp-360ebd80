@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { User, Sparkles, ChevronRight, Plus } from 'lucide-react';
+import { User, Sparkles, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { triggerHaptic } from '@/hooks/useHaptics';
 import { getUserArtistPrefs, followArtist, type UserArtistPref } from '@/lib/userArtistPrefs';
@@ -62,7 +62,6 @@ const FeaturedArtistsSection = () => {
   const navigate = useNavigate();
   const [artists, setArtists] = useState<DisplayArtist[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isUserPicks, setIsUserPicks] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,7 +76,6 @@ const FeaturedArtistsSection = () => {
               name: p.artist_name,
               image: p.artist_image,
             })));
-            setIsUserPicks(true);
             setLoading(false);
             return;
           }
@@ -91,7 +89,6 @@ const FeaturedArtistsSection = () => {
             name: a.name,
             image: a.image_url || null,
           })));
-          setIsUserPicks(false);
         }
       } catch (e) {
         console.error('Featured artists failed:', e);
