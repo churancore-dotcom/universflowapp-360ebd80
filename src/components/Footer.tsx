@@ -1,11 +1,8 @@
-import { motion } from 'framer-motion';
-
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  
+
   return (
     <footer className="py-6 px-4 text-center border-t border-white/5">
-      {/* App branding */}
       <div className="flex items-center justify-center gap-2 mb-3">
         <div
           className="w-6 h-6 rounded-full flex items-center justify-center"
@@ -35,26 +32,10 @@ const Footer = () => {
           <span className="text-white/90">Flow</span>
         </span>
       </div>
-      
+
       <p className="text-[10px] text-muted-foreground/60">
         © {currentYear} UniversFlow. All rights reserved.
       </p>
-      
-      {/* Developer credit */}
-      <motion.div 
-        className="mt-3 py-2 px-4 rounded-full inline-block"
-        style={{
-          background: 'linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1))',
-          border: '1px solid hsl(var(--primary) / 0.2)',
-        }}
-      >
-        <p className="text-[10px] text-muted-foreground/50">
-          Designed & Developed by
-        </p>
-        <p className="text-sm font-bold text-primary tracking-wide">
-          SHASHANK YADAV
-        </p>
-      </motion.div>
     </footer>
   );
 };

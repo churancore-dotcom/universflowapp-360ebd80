@@ -13,10 +13,10 @@ const StructuredData = () => {
       "name": "Univers Flow",
       "url": SITE_URL,
       "logo": "https://storage.googleapis.com/gpt-engineer-file-uploads/d6CK1hptEYS0iYCrQMmYcx7HukD2/uploads/1768315312999-Screenshot 2026-01-13 201134.png",
-      "description": "Premium free music streaming platform by SHASHANK YADAV. Stream unlimited songs, create playlists, download for offline listening.",
+      "description": "Premium free music streaming platform  Stream unlimited songs, create playlists, download for offline listening.",
       "founder": {
         "@type": "Person",
-        "name": "SHASHANK YADAV"
+        "name": "Universflow Team"
       },
       "sameAs": [
         "https://twitter.com/UniversFlow"
@@ -38,7 +38,7 @@ const StructuredData = () => {
       },
       "creator": {
         "@type": "Person",
-        "name": "SHASHANK YADAV"
+        "name": "Universflow Team"
       },
       "featureList": [
         "Free music streaming",
@@ -66,10 +66,10 @@ const StructuredData = () => {
       "@type": "MusicStreamingService",
       "name": "Univers Flow",
       "url": SITE_URL,
-      "description": "The best free music streaming app. Listen to millions of songs, discover new artists, and download music for offline listening. Created by SHASHANK YADAV.",
+      "description": "The best free music streaming app. Listen to millions of songs, discover new artists, and download music for offline listening. ",
       "provider": {
         "@type": "Person",
-        "name": "SHASHANK YADAV"
+        "name": "Universflow Team"
       },
       "offers": {
         "@type": "Offer",
@@ -104,7 +104,7 @@ const StructuredData = () => {
           "name": "Who created Univers Flow?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Univers Flow was designed and developed by SHASHANK YADAV as a premium music streaming experience for everyone."
+            "text": "Univers Flow was designed and developed by Universflow Team as a premium music streaming experience for everyone."
           }
         },
         {
@@ -179,7 +179,7 @@ const StructuredData = () => {
       },
       "author": {
         "@type": "Person",
-        "name": "SHASHANK YADAV"
+        "name": "Universflow Team"
       }
     };
 

@@ -11,8 +11,8 @@ interface SEOHeadProps {
 
 const SEOHead = ({
   title = "Univers Flow - Free Music Streaming & Download | Listen Offline",
-  description = "Stream and download unlimited music for free with Univers Flow. Discover millions of songs, create playlists, and listen offline. The best free music app by SHASHANK YADAV.",
-  keywords = "free music streaming, music download, offline music, free songs, music app, Univers Flow, SHASHANK YADAV, listen music free, mp3 download, music player, playlist creator",
+  description = "Stream and download unlimited music for free with Univers Flow. Discover millions of songs, create playlists, and listen offline. The best free music app.",
+  keywords = "free music streaming, music download, offline music, free songs, music app, Univers Flow, Universflow Team, listen music free, mp3 download, music player, playlist creator",
   image = "https://storage.googleapis.com/gpt-engineer-file-uploads/d6CK1hptEYS0iYCrQMmYcx7HukD2/social-images/social-1768315544947-Screenshot 2026-01-13 201134.png",
   url = "https://universflow.in",
   type = "website"
@@ -36,7 +36,7 @@ const SEOHead = ({
     // Basic meta tags
     updateMeta('description', description);
     updateMeta('keywords', keywords);
-    updateMeta('author', 'SHASHANK YADAV');
+    updateMeta('author', 'Universflow Team');
     updateMeta('robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
     updateMeta('googlebot', 'index, follow');
     

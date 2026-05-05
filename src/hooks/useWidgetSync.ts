@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { usePlayer } from '@/contexts/PlayerContext';
+import { usePlayerProgress } from '@/lib/playerProgressStore';
 import { 
   isWidgetBridgeAvailable, 
   updateNowPlayingWidget, 
@@ -13,15 +14,14 @@ import {
  * This should be used once at the app root level
  */
 export function useWidgetSync() {
-  const { 
-    currentSong, 
-    isPlaying, 
-    progress, 
-    duration,
-    togglePlay, 
-    nextSong, 
+  const {
+    currentSong,
+    isPlaying,
+    togglePlay,
+    nextSong,
     prevSong,
   } = usePlayer();
+  const { progress, duration } = usePlayerProgress();
   
   const lastUpdateRef = useRef<string>('');
   

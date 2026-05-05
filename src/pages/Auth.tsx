@@ -231,7 +231,7 @@ const Auth = () => {
         >
           <div className="w-1.5 h-1.5 rounded-full bg-primary" />
           <p className="text-[10px] text-muted-foreground/50 tracking-wider">
-            Crafted by <span className="text-muted-foreground/80 font-semibold">SHASHANK YADAV</span>
+            Universflow · Built for music lovers
           </p>
         </motion.div>
       </div>
