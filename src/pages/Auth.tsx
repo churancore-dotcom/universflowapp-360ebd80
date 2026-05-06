@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, MailCheck, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { FadeTransition } from '@/components/PageTransition';
+import { supabase } from '@/integrations/supabase/client';
 import appLogo from '@/assets/app-logo.png';
 
 const Auth = () => {
@@ -15,6 +16,8 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [verifySent, setVerifySent] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -32,7 +35,13 @@ const Auth = () => {
       if (isLogin) {
         const { error, isAdmin } = await signIn(email, password);
         if (error) {
-          toast.error(error.message);
+          const msg = error.message.toLowerCase();
+          if (msg.includes('email not confirmed') || msg.includes('not verified') || msg.includes('confirm')) {
+            setVerifySent(email);
+            toast.error('Please verify your email first');
+          } else {
+            toast.error(error.message);
+          }
         } else {
           toast.success('Welcome back!');
           navigate(isAdmin ? '/admin' : '/home');
@@ -40,18 +49,39 @@ const Auth = () => {
       } else {
         const { error } = await signUp(email, password);
         if (error) {
-          toast.error(error.message);
+          const msg = error.message.toLowerCase();
+          if (msg.includes('already') || msg.includes('registered') || msg.includes('exists')) {
+            toast.error('That email is already registered. Please sign in instead.');
+            setIsLogin(true);
+          } else {
+            toast.error(error.message);
+          }
         } else {
-          // Mark this session as fresh signup so the artist picker triggers
-          localStorage.setItem('uf_just_signed_up', '1');
-          toast.success('Account created successfully!');
-          navigate('/home');
+          // Mark for picker after they verify and sign in for the first time
+          localStorage.setItem('uf_pending_picker_email', email.toLowerCase());
+          setVerifySent(email);
         }
       }
     } catch {
       toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!verifySent) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: verifySent,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) toast.error(error.message);
+      else toast.success('Verification email sent again');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -67,7 +97,74 @@ const Auth = () => {
           }}
         />
 
+        <AnimatePresence mode="wait">
+          {verifySent ? (
+            <motion.div
+              key="verify"
+              className="relative w-full max-w-sm z-10"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+            >
+              <div
+                className="rounded-3xl p-7 text-center"
+                style={{
+                  background: 'rgba(28, 28, 30, 0.78)',
+                  border: '1px solid rgba(255, 255, 255, 0.10)',
+                  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.06)',
+                }}
+              >
+                <motion.div
+                  initial={{ scale: 0.4, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 280, damping: 18, delay: 0.05 }}
+                  className="mx-auto w-20 h-20 rounded-3xl flex items-center justify-center mb-5 relative"
+                  style={{ background: 'linear-gradient(135deg, #FF2D55, #BF5AF2, #5E5CE6)' }}
+                >
+                  <div
+                    className="absolute -inset-3 rounded-3xl opacity-50 pointer-events-none"
+                    style={{ background: 'radial-gradient(circle, hsl(300 80% 55% / 0.4), transparent 70%)', filter: 'blur(12px)' }}
+                  />
+                  <MailCheck className="w-10 h-10 text-white relative" strokeWidth={2.2} />
+                </motion.div>
+                <h2 className="text-2xl font-extrabold tracking-tight">Check your inbox</h2>
+                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                  We sent a verification link to
+                </p>
+                <p className="mt-1 text-sm font-bold text-primary break-all">{verifySent}</p>
+                <p className="text-xs text-muted-foreground/80 mt-4 leading-relaxed">
+                  Tap the link in the email to activate your account, then come back and sign in.
+                </p>
+                <Button
+                  onClick={handleResend}
+                  disabled={resending}
+                  variant="ghost"
+                  className="mt-5 h-10 rounded-xl text-xs font-semibold w-full"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                >
+                  {resending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : (
+                    <span className="flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" /> Resend email</span>
+                  )}
+                </Button>
+                <Button
+                  onClick={() => { setVerifySent(null); setIsLogin(true); }}
+                  className="mt-2 h-12 rounded-xl text-sm font-bold w-full text-primary-foreground border-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #FF2D55, #BF5AF2, #5E5CE6)',
+                    boxShadow: '0 4px 20px hsl(340 100% 50% / 0.25)',
+                  }}
+                >
+                  I've verified — Sign in
+                </Button>
+                <p className="text-[11px] text-muted-foreground/60 mt-4">
+                  Didn't get it? Check spam, or wait a minute and resend.
+                </p>
+              </div>
+            </motion.div>
+          ) : (
         <motion.div
+          key="form"
           className="relative w-full max-w-sm z-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -217,6 +314,8 @@ const Auth = () => {
             </p>
           </motion.form>
         </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Footer */}
         <motion.div
