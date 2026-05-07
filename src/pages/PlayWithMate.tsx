@@ -21,6 +21,7 @@ const QUICK_REACTIONS = ['❤️', '🔥', '😂', '🎶', '🥹', '🙌'];
 const PlayWithMate = () => {
   const navigate = useNavigate();
   const { currentSong } = usePlayer();
+  const { isPremium, isLoading: premiumLoading } = usePremium();
   const {
     isConnected, loading, room, participants, reactions, inviteUrl, suggestions,
     createSession, joinSession, leaveSession, sendReaction, kickParticipant,
