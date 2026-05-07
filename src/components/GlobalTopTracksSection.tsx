@@ -17,7 +17,7 @@ const GlobalTopTracksSection = () => {
 
     const loadTopTracks = async () => {
       try {
-        const data = await getTopIndexedTracks(30, country);
+        const data = await getTopIndexedTracks(30);
         if (!cancelled) {
           setTracks(data);
         }
