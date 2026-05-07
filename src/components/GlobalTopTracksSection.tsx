@@ -11,7 +11,7 @@ const GlobalTopTracksSection = () => {
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const { playSong, currentSong, isPlaying } = usePlayer();
   const country = useMemo(() => detectCountry(), []);
-  const regionLabel = country && REGION_LABEL[country] ? `Top 30 in ${REGION_LABEL[country]}` : 'Global Top 30';
+  const regionLabel = 'Top Charts';
 
   useEffect(() => {
     let cancelled = false;
