@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search as SearchIcon, Music, X, Globe, Radio, Loader2, Clock, Trash2 } from 'lucide-react';
 import { usePlayer, Song } from '@/contexts/PlayerContext';
