@@ -194,7 +194,7 @@ export async function getTrendingForCountry(
         return t;
       })
     );
-    const fresh = await Promise.any(tasks);
+    const fresh = await promiseAny(tasks);
     clearTimeout(timer);
     writeCachedTrending(region, fresh);
     return fresh;
@@ -242,7 +242,7 @@ export async function resolvePipedStream(videoId: string): Promise<string | null
         audio.sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
         return audio[0].url as string;
       });
-      const url = await Promise.any(tasks);
+      const url = await promiseAny(tasks);
       clearTimeout(timer);
       const fresh = readStreamCache();
       fresh[videoId] = { url, expiresAt: Date.now() + STREAM_TTL };
@@ -261,4 +261,19 @@ export async function resolvePipedStream(videoId: string): Promise<string | null
 
 export function prefetchPipedStream(videoId: string) {
   resolvePipedStream(videoId).catch(() => {/*silent*/});
+}
+
+// Polyfill: Promise.any is unavailable in our TS lib target.
+function promiseAny<T>(promises: Promise<T>[]): Promise<T> {
+  return new Promise((resolve, reject) => {
+    let pending = promises.length;
+    if (!pending) return reject(new Error('no-promises'));
+    const errors: any[] = [];
+    promises.forEach((p, i) => {
+      Promise.resolve(p).then(resolve).catch((err) => {
+        errors[i] = err;
+        if (--pending === 0) reject(new Error('all-rejected'));
+      });
+    });
+  });
 }
