@@ -7,7 +7,7 @@ import { useHaptics } from '@/hooks/useHaptics';
 
 interface PremiumLockOverlayProps {
   title: string;
-  description: string;
+  description?: string;
   onClose: () => void;
 }
 
@@ -65,8 +65,8 @@ const PremiumLockOverlay = memo(function PremiumLockOverlay({
           <p className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase mb-2">
             Premium feature
           </p>
-          <h2 className="text-[24px] font-bold mb-2 leading-tight">{title}</h2>
-          <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{description}</p>
+          <h2 className="text-[24px] font-bold mb-6 leading-tight">{title}</h2>
+          {description && <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{description}</p>}
 
           <motion.button
             whileTap={{ scale: 0.96 }}
