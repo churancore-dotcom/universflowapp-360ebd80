@@ -317,10 +317,10 @@ export function setReverb(percent: number) {
   if (engine.mode !== 'processed' || !engine.ctx || !engine.dryGain || !engine.wetGain) return;
   const ctx = engine.ctx;
   const now = ctx.currentTime;
-  const wet = Math.max(0, Math.min(1, percent / 100));
-  // Equal-power-ish crossfade: keep dry strong, blend reverb up to ~0.45
-  const dry = 1 - wet * 0.35;
-  const w = wet * 0.45;
+  const wet = Math.max(0, Math.min(0.45, percent / 100));
+  // Keep vocals intelligible: subtle room blend instead of washing the track.
+  const dry = 1 - wet * 0.2;
+  const w = wet * 0.32;
   engine.dryGain.gain.cancelScheduledValues(now);
   engine.wetGain.gain.cancelScheduledValues(now);
   engine.dryGain.gain.setTargetAtTime(dry, now, SMOOTH);
@@ -341,9 +341,9 @@ export function setSpatial(enabled: boolean) {
   }
   const tick = () => {
     if (!engine.panner || !engine.ctx) return;
-    engine.spatialAngle += 0.018;
-    const v = Math.sin(engine.spatialAngle) * 0.18;
-    engine.panner.pan.setTargetAtTime(v, engine.ctx.currentTime, 0.08);
+    engine.spatialAngle += 0.012;
+    const v = Math.sin(engine.spatialAngle) * 0.32;
+    engine.panner.pan.setTargetAtTime(v, engine.ctx.currentTime, 0.12);
     engine.spatialRaf = requestAnimationFrame(tick);
   };
   engine.spatialRaf = requestAnimationFrame(tick);
