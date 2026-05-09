@@ -40,6 +40,10 @@ export function useGlobalAudioEngine(audioElement: HTMLAudioElement | null) {
   useEffect(() => {
     if (!audioElement) return;
 
+    try {
+      localStorage.setItem('uf_audio_fx_allowed', isPremium ? '1' : '0');
+    } catch {}
+
     const reapply = () => {
       if (!isPremium) {
         bypassAudioElement(audioElement);
