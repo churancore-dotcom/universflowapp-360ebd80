@@ -9,8 +9,10 @@ import DownloadButton from '@/components/DownloadButton';
 import { TabTransition } from '@/components/PageTransition';
 import { Input } from '@/components/ui/input';
 import { SearchSkeleton } from '@/components/PageSkeletons';
-import { prefetchIndexedTrack, searchIndexedTracks, type IndexedTrack } from '@/lib/musicIndexer';
+import { prefetchIndexedTrack, searchIndexedTracks, getTagTopTracks, type IndexedTrack } from '@/lib/musicIndexer';
 import { isCatalogSongId } from '@/lib/songSupport';
+import { detectMoodTag } from '@/lib/moodKeywords';
+import FollowedArtistsRail from '@/components/FollowedArtistsRail';
 import {
   getSongHistory,
   removeSongFromHistory,
@@ -49,9 +51,29 @@ const Search = () => {
     const timer = setTimeout(async () => {
       setSearching(true);
       try {
-        const indexedResponse = await searchIndexedTracks(trimmedQuery, 50);
+        // YouTube-style: detect mood/genre keywords (e.g. "chill songs",
+        // "sad music") and pull the matching Last.fm tag chart in parallel
+        // with the literal text search. Then merge + dedupe so users get the
+        // actual vibe-matching tracks instead of just title hits.
+        const moodTag = detectMoodTag(trimmedQuery);
+        const [literal, tagTracks] = await Promise.all([
+          searchIndexedTracks(trimmedQuery, 200),
+          moodTag ? getTagTopTracks(moodTag, 60) : Promise.resolve([] as IndexedTrack[]),
+        ]);
         if (cancelled) return;
-        setIndexedResults(indexedResponse);
+
+        const seen = new Set<string>();
+        const merged: IndexedTrack[] = [];
+        // Mood/tag results lead when a mood was detected — they match intent better
+        const ordered = moodTag ? [...tagTracks, ...literal] : [...literal, ...tagTracks];
+        for (const t of ordered) {
+          const key = `${t.artist?.toLowerCase().trim()}::${t.title?.toLowerCase().trim()}`;
+          if (!key || seen.has(key)) continue;
+          seen.add(key);
+          merged.push(t);
+        }
+
+        setIndexedResults(merged);
         setSearchHistory(getSongHistory().filter(entry => !isCatalogSongId(entry.id)));
       } catch {
         if (!cancelled) setIndexedResults([]);
