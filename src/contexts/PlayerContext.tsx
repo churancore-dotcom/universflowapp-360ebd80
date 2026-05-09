@@ -497,6 +497,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const isPlayableUrl = useCallback((url?: string) => {
     if (!url) return false;
     if (url === '' || url === 'pending' || url === 'resolving') return false;
+    if (isYouTubeFallbackUrl(url)) return true;
     return url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:');
   }, []);
 
