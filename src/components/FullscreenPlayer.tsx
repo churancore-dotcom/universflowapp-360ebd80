@@ -407,6 +407,9 @@ const FullscreenPlayer = memo(function FullscreenPlayer() {
                 </div>
               )}
 
+              {/* From Your Artists rail (followed) */}
+              <FollowedArtistsRail compact songs={queue} title="From Your Artists" limit={12} />
+
               {/* Bottom actions */}
               <div className="flex items-center justify-around">
                 <button 

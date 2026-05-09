@@ -8,6 +8,7 @@ import { useDownloads } from '@/contexts/DownloadContext';
 import BottomNav from '@/components/BottomNav';
 import LikeButton from '@/components/LikeButton';
 import DownloadButton from '@/components/DownloadButton';
+import FollowArtistButton from '@/components/FollowArtistButton';
 import { TabTransition } from '@/components/PageTransition';
 import { iosSpring, iosBounce } from '@/lib/animations';
 
@@ -172,6 +173,22 @@ const ArtistDetail = () => {
             >
               {songs.length} {songs.length === 1 ? 'song' : 'songs'} • {totalMinutes} min
             </motion.p>
+
+            {artist?.name && (
+              <motion.div
+                className="mt-3"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...iosSpring, delay: 0.35 }}
+              >
+                <FollowArtistButton
+                  artistName={artist.name}
+                  artistImage={artist.photo_url}
+                  source="catalog"
+                  size="md"
+                />
+              </motion.div>
+            )}
           </div>
         </motion.div>
 
