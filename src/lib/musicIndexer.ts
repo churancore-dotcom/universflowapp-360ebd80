@@ -30,6 +30,12 @@ interface ResolveTrackResponse {
   fallback?: boolean;
 }
 
+interface YoutubeSearchResponse {
+  success: boolean;
+  results?: IndexedTrack[];
+  error?: string;
+}
+
 // ── Persistent stream cache (localStorage + memory) ──
 // Memory cache for instant hits, localStorage for survival across reloads.
 // TTL is 55min because most CDN signed URLs from the resolver are valid ~1h.
@@ -143,6 +149,19 @@ export async function searchIndexedTracks(query: string, limit = 50): Promise<In
     limit,
   });
   return Array.isArray(data.results) ? data.results : [];
+}
+
+export async function searchYouTubeMusicTracks(query: string, limit = 50): Promise<IndexedTrack[]> {
+  if (!query || query.trim().length < 2) return [];
+  try {
+    const data = await requestFunction<YoutubeSearchResponse>('yt-music-search', {
+      query: query.trim(),
+      limit,
+    });
+    return Array.isArray(data.results) ? data.results : [];
+  } catch {
+    return [];
+  }
 }
 
 // Session-level cache for Global Top tracks so they don't refetch every time
