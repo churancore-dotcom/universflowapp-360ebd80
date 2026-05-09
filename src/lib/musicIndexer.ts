@@ -4,6 +4,7 @@ export interface IndexedTrack {
   id: string;
   title: string;
   artist: string;
+  audio_url?: string;
   album?: string;
   cover_url?: string;
   duration?: number;
