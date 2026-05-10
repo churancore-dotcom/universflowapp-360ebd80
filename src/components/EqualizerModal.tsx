@@ -218,6 +218,7 @@ const EqualizerModal = ({ isOpen, onClose }: EqualizerModalProps) => {
     setPlaybackSpeed(1);
     setSpatialAudio(false);
     setStudioSpace('off');
+    setLateNight(false);
     setActivePreset('flat');
     if (audioElement) audioElement.playbackRate = 1;
     toast.success('Equalizer reset');
