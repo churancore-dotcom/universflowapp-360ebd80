@@ -25,8 +25,22 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+
+  const handleResend = async () => {
+    if (!pendingEmail || resending) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: pendingEmail });
+      if (error) toast.error(error.message);
+      else toast.success('Verification email sent again');
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +56,13 @@ const Auth = () => {
       if (isLogin) {
         const { error, isAdmin } = await signIn(email, password);
         if (error) {
-          toast.error(error.message);
+          const msg = (error.message || '').toLowerCase();
+          if (msg.includes('not confirmed') || msg.includes('confirm')) {
+            setPendingEmail(email);
+            toast.error('Please verify your email to sign in');
+          } else {
+            toast.error(error.message);
+          }
         } else {
           toast.success('Welcome back!');
           navigate(isAdmin ? '/admin' : '/home');
@@ -52,10 +72,9 @@ const Auth = () => {
         if (error) {
           toast.error(error.message);
         } else {
-          // Mark this session as fresh signup so the artist picker triggers
+          // Mark this session as fresh signup so the artist picker triggers later
           localStorage.setItem('uf_just_signed_up', '1');
-          toast.success('Account created successfully!');
-          navigate('/home');
+          setPendingEmail(email);
         }
       }
     } catch {
