@@ -24,7 +24,9 @@ interface DownloadContextType {
   downloads: DownloadedSong[];
   downloadProgress: Record<string, DownloadProgress>;
   downloadQueue: QueuedSong[];
+  currentDownloadId: string | null;
   downloadSong: (song: Song) => Promise<void>;
+  cancelDownload: (songId: string) => void;
   addToQueue: (songs: Song[]) => void;
   removeFromQueue: (songId: string) => void;
   clearQueue: () => void;
@@ -194,7 +196,10 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isIndexedDBSupported, setIsIndexedDBSupported] = useState(true);
   const [downloadQueue, setDownloadQueue] = useState<QueuedSong[]>([]);
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
+  const [currentDownloadId, setCurrentDownloadId] = useState<string | null>(null);
   const processingRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const cancelledIdsRef = useRef<Set<string>>(new Set());
 
   // Load downloads from IndexedDB on mount
   useEffect(() => {
@@ -266,6 +271,10 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ...prev,
       [song.id]: { songId: song.id, progress: 0, status: 'pending' }
     }));
+    setCurrentDownloadId(song.id);
+    cancelledIdsRef.current.delete(song.id);
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       // Start download
@@ -277,6 +286,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const response = await fetch(song.audio_url, {
         mode: 'cors',
         credentials: 'omit',
+        signal: controller.signal,
       });
       
       if (!response.ok) {
@@ -293,16 +303,20 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       let received = 0;
 
       while (true) {
+        if (controller.signal.aborted) {
+          try { reader.cancel(); } catch {}
+          throw new DOMException('Aborted', 'AbortError');
+        }
         const { done, value } = await reader.read();
-        
+
         if (done) break;
-        
+
         // Copy to regular ArrayBuffer for blob compatibility
         chunks.push(value.buffer.slice(0) as ArrayBuffer);
         received += value.length;
-        
+
         const progress = total > 0 ? Math.round((received / total) * 100) : 50;
-        
+
         setDownloadProgress(prev => ({
           ...prev,
           [song.id]: { songId: song.id, progress: Math.min(progress, 95), status: 'downloading' }
@@ -341,23 +355,41 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         });
       }, 2000);
 
-    } catch (error) {
-      console.error('Download failed:', error);
-      toast.error(getDownloadUnavailableMessage(song));
+    } catch (error: any) {
+      const wasCancelled = error?.name === 'AbortError' || cancelledIdsRef.current.has(song.id);
+      if (wasCancelled) {
+        toast.info('Download cancelled');
+      } else {
+        console.error('Download failed:', error);
+        toast.error(getDownloadUnavailableMessage(song));
+      }
       setDownloadProgress(prev => ({
         ...prev,
         [song.id]: { songId: song.id, progress: 0, status: 'error' }
       }));
-      
+
       setTimeout(() => {
         setDownloadProgress(prev => {
           const newProgress = { ...prev };
           delete newProgress[song.id];
           return newProgress;
         });
-      }, 3000);
+      }, wasCancelled ? 400 : 3000);
+    } finally {
+      cancelledIdsRef.current.delete(song.id);
+      if (abortRef.current === controller) abortRef.current = null;
+      setCurrentDownloadId(prev => (prev === song.id ? null : prev));
     }
   }, [downloads, isIndexedDBSupported]);
+
+  const cancelDownload = useCallback((songId: string) => {
+    // If song is in queue but not yet downloading, just drop it
+    setDownloadQueue(prev => prev.filter(q => q.id !== songId));
+    if (currentDownloadId === songId && abortRef.current) {
+      cancelledIdsRef.current.add(songId);
+      try { abortRef.current.abort(); } catch {}
+    }
+  }, [currentDownloadId]);
 
   const removeSong = useCallback(async (songId: string) => {
     try {
@@ -465,7 +497,9 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       downloads,
       downloadProgress,
       downloadQueue,
+      currentDownloadId,
       downloadSong,
+      cancelDownload,
       addToQueue,
       removeFromQueue,
       clearQueue,

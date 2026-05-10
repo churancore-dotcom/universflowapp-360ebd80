@@ -5,13 +5,15 @@ import { useDownloads, QueuedSong } from '@/contexts/DownloadContext';
 import { Button } from '@/components/ui/button';
 
 const DownloadQueuePanel = () => {
-  const { 
-    downloadQueue, 
-    downloadProgress, 
-    removeFromQueue, 
-    clearQueue, 
+  const {
+    downloadQueue,
+    downloadProgress,
+    removeFromQueue,
+    clearQueue,
     isProcessingQueue,
-    downloads 
+    downloads,
+    cancelDownload,
+    currentDownloadId,
   } = useDownloads();
   
   const [isExpanded, setIsExpanded] = useState(false);
@@ -141,10 +143,14 @@ const DownloadQueuePanel = () => {
                       {/* Currently downloading item */}
                       {currentlyDownloading && (
                         <QueueItem
-                          song={downloadQueue.find(q => q.id === currentlyDownloading[0]) || null}
+                          song={downloadQueue.find(q => q.id === currentlyDownloading[0])
+                            || downloads.find(d => d.id === currentlyDownloading[0])
+                            || (currentDownloadId === currentlyDownloading[0]
+                              ? ({ id: currentlyDownloading[0], title: 'Downloading…', artist: '', cover_url: '', queuedAt: '', position: 0 } as any)
+                              : null)}
                           progress={currentlyDownloading[1].progress}
                           isDownloading={true}
-                          onRemove={() => {}}
+                          onRemove={() => cancelDownload(currentlyDownloading[0])}
                         />
                       )}
                       
@@ -257,20 +263,19 @@ const QueueItem = ({ song, position, progress, isDownloading, onRemove }: QueueI
         )}
       </div>
 
-      {/* Remove button (only for queued, not downloading) */}
-      {!isDownloading && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-destructive"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-        >
-          <X className="w-4 h-4" />
-        </Button>
-      )}
+      {/* Cancel/remove button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-destructive"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        aria-label={isDownloading ? 'Cancel download' : 'Remove from queue'}
+      >
+        <X className="w-4 h-4" />
+      </Button>
     </motion.div>
   );
 };
