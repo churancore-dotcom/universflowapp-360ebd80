@@ -10,6 +10,7 @@ interface StoredEQ {
   reverb?: number;
   spatialAudio?: boolean;
   playbackSpeed?: number;
+  lateNight?: boolean;
 }
 
 function readStored(): StoredEQ {
@@ -26,6 +27,7 @@ function hasActiveProcessing(s: StoredEQ) {
     (s.bassBoost ?? 0) > 0 ||
     (s.reverb ?? 0) > 0 ||
     s.spatialAudio ||
+    s.lateNight ||
     (typeof s.playbackSpeed === 'number' && s.playbackSpeed !== 1)
   );
 }
