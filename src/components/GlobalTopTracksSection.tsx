@@ -5,9 +5,8 @@ import { toast } from 'sonner';
 import { usePlayer, Song } from '@/contexts/PlayerContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserArtistPrefs } from '@/lib/userArtistPrefs';
-import { getTopIndexedTracks, prefetchIndexedTrack, resolveIndexedTrack, type IndexedTrack } from '@/lib/musicIndexer';
-
-const normalize = (v?: string | null) => v?.trim().toLowerCase() || '';
+import { prefetchIndexedTrack, resolveIndexedTrack, type IndexedTrack } from '@/lib/musicIndexer';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Top 30 from the user's followed artists.
