@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft, Crown, Check, Sparkles, Download, Headphones,
   Zap, Gift, Copy, Loader2, ShieldCheck, Users, Sliders, Music2, Infinity as InfinityIcon, Clock,
-  Radio, Waves, Orbit,
+  Radio, Waves, Orbit, Building2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '@/components/BottomNav';
@@ -31,6 +31,7 @@ const FEATURES = [
   { icon: Waves,       title: 'Adaptive Bass Engine',    desc: 'A reactive low-end that thickens drops and softens vocals in real time. Nothing else does this.' },
   { icon: Radio,       title: 'Endless Personal Radio',  desc: 'Infinite stations that learn every track you love.' },
   { icon: Sliders,     title: '8-Band Studio Equalizer', desc: 'Studio-grade tuning with crafted presets — works on every stream.' },
+  { icon: Building2,   title: 'Studio Spaces',           desc: 'Hear songs inside a Vinyl Booth, Cathedral, Stadium and more — a Universflow exclusive nobody else offers.' },
   { icon: Users,       title: 'Play With Mate',          desc: 'Premium-only sync rooms — listen together in real time with friends.' },
   { icon: Download,    title: 'Unlimited Downloads',     desc: 'Save anything. Listen offline. Anywhere.' },
   { icon: Music2,      title: 'AI Playlist Generator',   desc: 'Mood-matched playlists, made instantly.' },

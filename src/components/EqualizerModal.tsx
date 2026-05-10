@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, RotateCcw, Volume2, Zap, Waves, Music2, Headphones, Globe, Radio } from 'lucide-react';
+import { X, Sparkles, RotateCcw, Volume2, Zap, Waves, Music2, Headphones, Globe, Radio, Disc3, Mic2, Home, Building2, Church, Trophy } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { iosSpring } from '@/lib/animations';
@@ -14,9 +14,28 @@ import {
   setBands as engineSetBands,
   setReverb as engineSetReverb,
   setSpatial as engineSetSpatial,
+  setStudioSpace as engineSetStudioSpace,
   resume as engineResume,
+  type StudioSpaceId,
 } from '@/lib/audioEngine';
 import { useEngineState } from '@/hooks/useGlobalAudioEngine';
+
+interface StudioSpace {
+  id: StudioSpaceId;
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  desc: string;
+}
+
+const STUDIO_SPACES: StudioSpace[] = [
+  { id: 'off',       name: 'Off',         icon: X,         desc: 'No space' },
+  { id: 'vinyl',     name: 'Vinyl Booth', icon: Disc3,     desc: 'Warm & intimate' },
+  { id: 'studio',    name: 'Studio',      icon: Mic2,      desc: 'Dry & precise' },
+  { id: 'bedroom',   name: 'Bedroom',     icon: Home,      desc: 'Cozy & close' },
+  { id: 'hall',      name: 'Concert Hall',icon: Building2, desc: 'Spacious & lush' },
+  { id: 'cathedral', name: 'Cathedral',   icon: Church,    desc: 'Vast & ethereal' },
+  { id: 'stadium',   name: 'Stadium',     icon: Trophy,    desc: 'Huge & roaring' },
+];
 
 interface EqualizerModalProps {
   isOpen: boolean;
@@ -68,13 +87,15 @@ function hasActiveProcessing(data: {
   reverb: number;
   playbackSpeed: number;
   spatialAudio: boolean;
+  studioSpace: StudioSpaceId;
 }) {
   return Boolean(
     data.bands.some((band) => Math.abs(band.gain) >= 0.5) ||
     data.bassBoost > 0 ||
     data.reverb > 0 ||
     data.spatialAudio ||
-    data.playbackSpeed !== 1
+    data.playbackSpeed !== 1 ||
+    data.studioSpace !== 'off'
   );
 }
 
@@ -106,6 +127,7 @@ const EqualizerModal = ({ isOpen, onClose }: EqualizerModalProps) => {
   const [reverb, setReverb] = useState(Math.min(saved?.reverb ?? 0, 45));
   const [playbackSpeed, setPlaybackSpeed] = useState(saved?.playbackSpeed ?? 1);
   const [spatialAudio, setSpatialAudio] = useState(saved?.spatialAudio ?? false);
+  const [studioSpace, setStudioSpace] = useState<StudioSpaceId>(saved?.studioSpace ?? 'off');
   const [activePreset, setActivePreset] = useState<string>(saved?.activePreset ?? 'flat');
 
   // Only route through Web Audio while EQ/effects are active. This prevents
@@ -113,31 +135,37 @@ const EqualizerModal = ({ isOpen, onClose }: EqualizerModalProps) => {
   useEffect(() => {
     if (!isPremium) return;
     if (!audioElement) return;
-    const active = hasActiveProcessing({ bands, bassBoost, reverb, playbackSpeed, spatialAudio });
+    const active = hasActiveProcessing({ bands, bassBoost, reverb, playbackSpeed, spatialAudio, studioSpace });
     if (active) {
       engineResume();
       connectAudioElement(audioElement);
       engineSetBands(bands.map(b => b.gain), bassBoost);
-      engineSetReverb(reverb);
+      // When a Studio Space is active, IT owns wet/dry. Otherwise the reverb slider does.
+      if (studioSpace === 'off') engineSetReverb(reverb);
+      engineSetStudioSpace(studioSpace);
       engineSetSpatial(spatialAudio);
     } else {
       bypassAudioElement(audioElement);
       engineSetSpatial(false);
       audioElement.playbackRate = 1;
     }
-  }, [isPremium, audioElement, currentSong?.id, bands, bassBoost, reverb, playbackSpeed, spatialAudio]);
+  }, [isPremium, audioElement, currentSong?.id, bands, bassBoost, reverb, playbackSpeed, spatialAudio, studioSpace]);
 
   // Push EQ band changes to the engine (smoothed, never rebuilds graph)
   useEffect(() => {
-    if (!isPremium || !audioElement || !hasActiveProcessing({ bands, bassBoost, reverb, playbackSpeed, spatialAudio })) return;
+    if (!isPremium || !audioElement || !hasActiveProcessing({ bands, bassBoost, reverb, playbackSpeed, spatialAudio, studioSpace })) return;
     engineResume();
     connectAudioElement(audioElement);
     engineSetBands(bands.map(b => b.gain), bassBoost);
-  }, [isPremium, bands, bassBoost, audioElement, reverb, playbackSpeed, spatialAudio]);
+  }, [isPremium, bands, bassBoost, audioElement, reverb, playbackSpeed, spatialAudio, studioSpace]);
 
   useEffect(() => {
-    if (isPremium) engineSetReverb(reverb);
-  }, [isPremium, reverb]);
+    if (isPremium && studioSpace === 'off') engineSetReverb(reverb);
+  }, [isPremium, reverb, studioSpace]);
+
+  useEffect(() => {
+    if (isPremium) engineSetStudioSpace(studioSpace);
+  }, [isPremium, studioSpace]);
 
   useEffect(() => {
     if (isPremium) engineSetSpatial(spatialAudio);
@@ -155,9 +183,10 @@ const EqualizerModal = ({ isOpen, onClose }: EqualizerModalProps) => {
       reverb,
       playbackSpeed,
       spatialAudio,
+      studioSpace,
       activePreset,
     });
-  }, [bands, bassBoost, reverb, playbackSpeed, spatialAudio, activePreset]);
+  }, [bands, bassBoost, reverb, playbackSpeed, spatialAudio, studioSpace, activePreset]);
 
   const handleBandChange = useCallback((index: number, value: number) => {
     setBandsState(prev => prev.map((b, i) => i === index ? { ...b, gain: value } : b));
@@ -177,10 +206,19 @@ const EqualizerModal = ({ isOpen, onClose }: EqualizerModalProps) => {
     setReverb(0);
     setPlaybackSpeed(1);
     setSpatialAudio(false);
+    setStudioSpace('off');
     setActivePreset('flat');
     if (audioElement) audioElement.playbackRate = 1;
     toast.success('Equalizer reset');
   }, [audioElement]);
+
+  const handleSpaceSelect = useCallback((id: StudioSpaceId) => {
+    setStudioSpace(id);
+    if (id !== 'off') {
+      const name = STUDIO_SPACES.find(s => s.id === id)?.name;
+      if (name) toast.success(`Now playing in ${name}`);
+    }
+  }, []);
 
   if (!isOpen) return null;
 
@@ -404,6 +442,54 @@ const EqualizerModal = ({ isOpen, onClose }: EqualizerModalProps) => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Studio Spaces — Premium-exclusive acoustic environments */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="text-sm font-medium flex items-center gap-2">
+                    Studio Spaces
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gradient-to-r from-rose-500 to-pink-600 text-white">EXCLUSIVE</span>
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Hear songs in real acoustic environments</p>
+                </div>
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
+                {STUDIO_SPACES.map((space) => {
+                  const Icon = space.icon;
+                  const isSelected = studioSpace === space.id;
+                  return (
+                    <motion.button
+                      key={space.id}
+                      onClick={() => handleSpaceSelect(space.id)}
+                      className="relative flex-shrink-0 flex flex-col items-center gap-1.5 py-3 px-3 rounded-xl min-w-[88px] transition-all"
+                      style={{
+                        background: isSelected
+                          ? 'linear-gradient(135deg, hsl(var(--primary)), hsl(330 80% 55%))'
+                          : 'rgba(28, 28, 30, 0.8)',
+                        border: isSelected
+                          ? '1px solid hsl(var(--primary) / 0.6)'
+                          : '1px solid rgba(255, 255, 255, 0.06)',
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-muted-foreground'}`} />
+                      <span className={`text-[11px] font-medium ${isSelected ? 'text-white' : 'text-foreground'}`}>
+                        {space.name}
+                      </span>
+                      <span className={`text-[9px] leading-tight ${isSelected ? 'text-white/80' : 'text-muted-foreground/70'}`}>
+                        {space.desc}
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+              {studioSpace !== 'off' && (
+                <p className="text-[10px] text-muted-foreground/70 mt-1 px-1">
+                  Reverb slider is overridden while a Studio Space is active.
+                </p>
+              )}
             </div>
 
             {/* 8D Spatial Audio */}
