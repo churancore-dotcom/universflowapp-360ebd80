@@ -15,6 +15,7 @@ import {
   setReverb as engineSetReverb,
   setSpatial as engineSetSpatial,
   setStudioSpace as engineSetStudioSpace,
+  setLateNight as engineSetLateNight,
   resume as engineResume,
   type StudioSpaceId,
 } from '@/lib/audioEngine';
