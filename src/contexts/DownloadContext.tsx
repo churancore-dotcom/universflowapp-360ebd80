@@ -24,7 +24,9 @@ interface DownloadContextType {
   downloads: DownloadedSong[];
   downloadProgress: Record<string, DownloadProgress>;
   downloadQueue: QueuedSong[];
+  currentDownloadId: string | null;
   downloadSong: (song: Song) => Promise<void>;
+  cancelDownload: (songId: string) => void;
   addToQueue: (songs: Song[]) => void;
   removeFromQueue: (songId: string) => void;
   clearQueue: () => void;
