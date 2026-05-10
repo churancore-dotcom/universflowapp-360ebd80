@@ -1143,12 +1143,27 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
+        // Pull a much wider sample so we can diversify by artist (Last.fm geo charts
+        // are heavily biased toward whichever artist is currently being scrobbled most).
         const d = await fetchJson(buildLastFmUrl('geo.getTopTracks', {
-          country, limit: String(Math.min(50, limit + 5)),
+          country, limit: String(Math.min(200, Math.max(60, limit * 6))),
         }));
         const raw = d?.tracks?.track;
         const matches: LastFmTrack[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
-        const enriched = await Promise.all(matches.slice(0, limit + 4).map(async (t) => {
+        // Cap each artist to at most 2 entries — keeps the chart truly "viral", not a single album.
+        const perArtistCap = 2;
+        const perArtistCount: Record<string, number> = {};
+        const diversified: LastFmTrack[] = [];
+        for (const t of matches) {
+          const a = (getArtistName(t.artist) || '').toLowerCase().trim();
+          if (!a) continue;
+          const c = perArtistCount[a] || 0;
+          if (c >= perArtistCap) continue;
+          perArtistCount[a] = c + 1;
+          diversified.push(t);
+          if (diversified.length >= limit + 6) break;
+        }
+        const enriched = await Promise.all(diversified.map(async (t) => {
           const info = t.name ? await getTrackInfo(getArtistName(t.artist), t.name) : null;
           const mapped = mapTrack(t, info);
           return mapped ? hydrateTrackArtwork(mapped) : null;
