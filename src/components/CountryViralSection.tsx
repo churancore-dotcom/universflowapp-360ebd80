@@ -27,6 +27,27 @@ function detectFallbackCountry(): string {
   }
 }
 
+/** Fetch Deezer top chart (global). Returns lightweight tracks needing stream resolution. */
+async function getDeezerChart(limit = 30): Promise<IndexedTrack[]> {
+  try {
+    const res = await fetch(`https://api.deezer.com/chart/0/tracks?limit=${limit}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const items: any[] = Array.isArray(data?.data) ? data.data : [];
+    return items.map((t) => ({
+      id: `deezer-${t.id}`,
+      title: t.title_short || t.title || 'Unknown',
+      artist: t?.artist?.name || 'Unknown',
+      cover_url: t?.album?.cover_big || t?.album?.cover_medium || undefined,
+      duration: t?.duration || undefined,
+    })) as IndexedTrack[];
+  } catch {
+    return [];
+  }
+}
+
 const CountryViralSection = memo(function CountryViralSection() {
   const { user } = useAuth();
   const { currentSong, isPlaying, playSong, togglePlay } = usePlayer();
