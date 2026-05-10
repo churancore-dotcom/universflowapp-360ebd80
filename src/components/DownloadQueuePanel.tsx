@@ -5,13 +5,15 @@ import { useDownloads, QueuedSong } from '@/contexts/DownloadContext';
 import { Button } from '@/components/ui/button';
 
 const DownloadQueuePanel = () => {
-  const { 
-    downloadQueue, 
-    downloadProgress, 
-    removeFromQueue, 
-    clearQueue, 
+  const {
+    downloadQueue,
+    downloadProgress,
+    removeFromQueue,
+    clearQueue,
     isProcessingQueue,
-    downloads 
+    downloads,
+    cancelDownload,
+    currentDownloadId,
   } = useDownloads();
   
   const [isExpanded, setIsExpanded] = useState(false);
