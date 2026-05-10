@@ -534,6 +534,37 @@ const EqualizerModal = ({ isOpen, onClose }: EqualizerModalProps) => {
                 className="data-[state=checked]:bg-primary"
               />
             </div>
+
+            {/* Late Night Mode */}
+            <div
+              className="flex items-center justify-between p-4 rounded-2xl"
+              style={{
+                background: 'rgba(28, 28, 30, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{
+                    background: lateNight
+                      ? 'linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(220 70% 45% / 0.3))'
+                      : 'rgba(255,255,255,0.05)',
+                  }}
+                >
+                  <Moon className={`w-5 h-5 ${lateNight ? 'text-primary' : 'text-muted-foreground'}`} />
+                </div>
+                <div>
+                  <span className="text-sm font-medium">Late Night Mode</span>
+                  <p className="text-[11px] text-muted-foreground">Lifts whispers, tames peaks for quiet listening</p>
+                </div>
+              </div>
+              <Switch
+                checked={lateNight}
+                onCheckedChange={setLateNight}
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
           </div>
         </motion.div>
       </motion.div>
