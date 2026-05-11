@@ -445,6 +445,18 @@ const Search = () => {
                               <Loader2 className="w-4 h-4 animate-spin text-primary" />
                             ) : (
                               <>
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleHideIndexed(track);
+                                  }}
+                                  className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground active:bg-white/10"
+                                  aria-label="Don’t show again"
+                                  title="Don’t show again"
+                                >
+                                  <EyeOff className="w-3.5 h-3.5" />
+                                </button>
                                 <PinToViralButton
                                   song={{
                                     track_id: track.id,
