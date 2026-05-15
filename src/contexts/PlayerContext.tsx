@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useRef, useEffect, useCallb
 import { useMediaSession } from '@/hooks/useMediaSession';
 import { useGlobalAudioEngine } from '@/hooks/useGlobalAudioEngine';
 import { supabase } from '@/integrations/supabase/client';
-import { resolveIndexedTrack, prefetchIndexedTrack } from '@/lib/musicIndexer';
+import { resolveIndexedTrack, prefetchIndexedTrack, invalidateStreamCache } from '@/lib/musicIndexer';
 import { playerProgressStore, usePlayerProgress } from '@/lib/playerProgressStore';
 import { resume as resumeAudioEngine } from '@/lib/audioEngine';
 import { toast } from 'sonner';
@@ -501,16 +501,21 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:');
   }, []);
 
-  // Resolve audio URL for indexed/stream tracks that have no real URL
-  const resolveAudioUrl = useCallback(async (song: Song): Promise<string | null> => {
-    if (isPlayableUrl(song.audio_url)) return song.audio_url;
-    // Try to resolve via music indexer
-    try {
-      const result = await resolveIndexedTrack(song.artist, song.title);
-      if (result?.streamUrl) return result.streamUrl;
-    } catch { /* fall through */ }
-    return null;
-  }, [isPlayableUrl]);
+  // Resolve audio URL for indexed/stream tracks that have no real URL.
+  // Pass `forceRefresh` to bypass any cached URL — used when a previously
+  // cached URL just failed to play (stale Invidious link, expired token, etc).
+  const resolveAudioUrl = useCallback(
+    async (song: Song, opts: { forceRefresh?: boolean } = {}): Promise<string | null> => {
+      if (!opts.forceRefresh && isPlayableUrl(song.audio_url)) return song.audio_url;
+      if (!song.artist || !song.title) return null;
+      try {
+        const result = await resolveIndexedTrack(song.artist, song.title, opts);
+        if (result?.streamUrl) return result.streamUrl;
+      } catch { /* fall through */ }
+      return null;
+    },
+    [isPlayableUrl],
+  );
 
   // ── Preload NEXT queued track for zero-gap transitions ──
   // Whenever queue / current index changes, warm `nextAudioRef` with the upcoming
@@ -834,7 +839,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // ── Auto-skip on stream errors (broken/expired URLs) ──
     let lastErrorAt = 0;
-    const handleAudioError = () => {
+    const recoveryAttempted = new Set<string>();
+    const handleAudioError = async () => {
       // Debounce: avoid skip-storms if a few errors fire in a row
       const now = Date.now();
       if (now - lastErrorAt < 1500) return;
@@ -845,6 +851,38 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (errorCode === MediaError.MEDIA_ERR_ABORTED) return;
 
       console.warn('[player] audio error, auto-skipping:', errorCode, audio.error?.message);
+
+      // ── First-chance recovery: stream URL likely went stale. Re-resolve
+      //    once with a forced cache-bust, then retry the same song. Only skip
+      //    if the refreshed URL also fails. ──
+      const cur = queue[currentIndex];
+      const looksStale =
+        errorCode === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED ||
+        errorCode === MediaError.MEDIA_ERR_NETWORK ||
+        errorCode === MediaError.MEDIA_ERR_DECODE;
+      if (
+        cur &&
+        looksStale &&
+        cur.artist &&
+        cur.title &&
+        !recoveryAttempted.has(cur.id)
+      ) {
+        recoveryAttempted.add(cur.id);
+        try {
+          const fresh = await resolveAudioUrl(cur, { forceRefresh: true });
+          if (fresh && fresh !== cur.audio_url) {
+            const refreshed = { ...cur, audio_url: fresh };
+            const newQueue = [...queue];
+            newQueue[currentIndex] = refreshed;
+            setQueueState(newQueue);
+            setCurrentSong(refreshed);
+            configureAudioElementSource(audio, buildStreamProxyUrl(fresh));
+            audio.load();
+            await audio.play().catch(() => { /* will fall through to skip below on next error */ });
+            return;
+          }
+        } catch { /* fall through to skip */ }
+      }
 
       if (queue.length === 0) {
         setIsPlaying(false);
@@ -879,7 +917,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('error', handleAudioError);
     };
-  }, [currentIndex, queue, shuffle, repeat, crossfade, crossfadeDuration, getNextIndex, playSongAtIndex]);
+  }, [currentIndex, queue, shuffle, repeat, crossfade, crossfadeDuration, getNextIndex, playSongAtIndex, resolveAudioUrl]);
 
   // Crossfade implementation
   const startCrossfade = useCallback(() => {
