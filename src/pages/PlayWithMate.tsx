@@ -15,6 +15,7 @@ import { triggerHaptic } from '@/hooks/useHaptics';
 import { toast } from 'sonner';
 import { usePremium } from '@/hooks/usePremium';
 import PremiumLockOverlay from '@/components/PremiumLockOverlay';
+import SEOHead from '@/components/SEOHead';
 
 const QUICK_REACTIONS = ['❤️', '🔥', '😂', '🎶', '🥹', '🙌'];
 
