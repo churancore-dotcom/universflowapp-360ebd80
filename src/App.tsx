@@ -296,7 +296,10 @@ const AppContent = () => {
 
   return (
     <MobileShell>
-      <SEOHead />
+      {/* SEOHead removed from App.tsx — it was overwriting per-page titles
+          and Open Graph tags on every route. Each page (Home, Premium,
+          PlaylistDetail, etc.) now owns its own SEOHead, and index.html
+          provides the sitewide fallback for non-JS crawlers. */}
       <Suspense fallback={null}>
         <StructuredData />
       </Suspense>
