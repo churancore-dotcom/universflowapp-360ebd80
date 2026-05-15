@@ -376,6 +376,9 @@ const Home = () => {
               {/* Online-only discovery sections — hidden when offline */}
               {!isOffline && (
                 <>
+                  {/* Premium-only / early-access shelf (teaser for free users) */}
+                  <PremiumFirstSection />
+
                   {/* Artist discovery */}
                   <FeaturedArtistsSection />
 
