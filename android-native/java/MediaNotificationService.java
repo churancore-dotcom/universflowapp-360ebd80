@@ -5,10 +5,15 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ServiceInfo;
 import android.graphics.Bitmap;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Handler;
@@ -58,6 +63,83 @@ public class MediaNotificationService extends Service {
     private PowerManager.WakeLock wakeLock = null;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    private AudioManager audioManager = null;
+    private AudioFocusRequest focusRequest = null;
+    private boolean noisyReceiverRegistered = false;
+
+    private final BroadcastReceiver noisyReceiver = new BroadcastReceiver() {
+        @Override public void onReceive(Context ctx, Intent i) {
+            if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(i.getAction())) {
+                // Headphones unplugged / BT disconnected — pause like Spotify/YouTube Music.
+                MediaNotificationPlugin.emitControlEvent("music-controls-pause");
+            }
+        }
+    };
+
+    private final AudioManager.OnAudioFocusChangeListener focusListener = new AudioManager.OnAudioFocusChangeListener() {
+        @Override public void onAudioFocusChange(int change) {
+            switch (change) {
+                case AudioManager.AUDIOFOCUS_LOSS:
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                    // Phone call, Maps voice, alarm — pause cleanly.
+                    MediaNotificationPlugin.emitControlEvent("music-controls-pause");
+                    break;
+                case AudioManager.AUDIOFOCUS_GAIN:
+                    // Don't auto-resume — let the user decide.
+                    break;
+            }
+        }
+    };
+
+    private void registerNoisyReceiver() {
+        if (noisyReceiverRegistered) return;
+        try {
+            registerReceiver(noisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
+            noisyReceiverRegistered = true;
+        } catch (Exception ignore) {}
+    }
+
+    private void unregisterNoisyReceiver() {
+        if (!noisyReceiverRegistered) return;
+        try { unregisterReceiver(noisyReceiver); } catch (Exception ignore) {}
+        noisyReceiverRegistered = false;
+    }
+
+    private void requestAudioFocus() {
+        try {
+            if (audioManager == null) audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+            if (audioManager == null) return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (focusRequest == null) {
+                    AudioAttributes attrs = new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build();
+                    focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                        .setAudioAttributes(attrs)
+                        .setOnAudioFocusChangeListener(focusListener, mainHandler)
+                        .setWillPauseWhenDucked(true)
+                        .build();
+                }
+                audioManager.requestAudioFocus(focusRequest);
+            } else {
+                audioManager.requestAudioFocus(focusListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            }
+        } catch (Exception ignore) {}
+    }
+
+    private void abandonAudioFocus() {
+        try {
+            if (audioManager == null) return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (focusRequest != null) audioManager.abandonAudioFocusRequest(focusRequest);
+            } else {
+                audioManager.abandonAudioFocus(focusListener);
+            }
+        } catch (Exception ignore) {}
+    }
 
     private void acquireWakeLockIfNeeded() {
         if (wakeLock != null && wakeLock.isHeld()) return;
@@ -112,13 +194,15 @@ public class MediaNotificationService extends Service {
                 coverUrl = safe(intent.getStringExtra("cover"));
                 durationMs = intent.getLongExtra("duration", 0L);
                 isPlaying = intent.getBooleanExtra("isPlaying", false);
-                if (isPlaying) acquireWakeLockIfNeeded(); else releaseWakeLock();
+                if (isPlaying) { acquireWakeLockIfNeeded(); requestAudioFocus(); registerNoisyReceiver(); }
+                else { releaseWakeLock(); }
                 refresh(true);
                 break;
             }
             case ACTION_STATE: {
                 isPlaying = intent.getBooleanExtra("isPlaying", isPlaying);
-                if (isPlaying) acquireWakeLockIfNeeded(); else releaseWakeLock();
+                if (isPlaying) { acquireWakeLockIfNeeded(); requestAudioFocus(); registerNoisyReceiver(); }
+                else { releaseWakeLock(); }
                 if (intent.hasExtra("position")) {
                     positionMs = intent.getLongExtra("position", 0L);
                 }
@@ -362,6 +446,8 @@ public class MediaNotificationService extends Service {
 
     @Override
     public void onDestroy() {
+        unregisterNoisyReceiver();
+        abandonAudioFocus();
         releaseWakeLock();
         stopForegroundCompat();
         super.onDestroy();
