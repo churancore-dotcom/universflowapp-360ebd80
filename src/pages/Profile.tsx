@@ -298,6 +298,9 @@ const Profile = () => {
             </button>
           </div>
 
+          {/* Renewal nudge (premium users within 7 days of expiry) */}
+          <RenewalNudge />
+
           {/* Premium Section */}
           {!premiumLoading && !isPremium && (
             <button
