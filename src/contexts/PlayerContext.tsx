@@ -839,7 +839,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // ── Auto-skip on stream errors (broken/expired URLs) ──
     let lastErrorAt = 0;
-    const handleAudioError = () => {
+    const recoveryAttempted = new Set<string>();
+    const handleAudioError = async () => {
       // Debounce: avoid skip-storms if a few errors fire in a row
       const now = Date.now();
       if (now - lastErrorAt < 1500) return;
@@ -850,6 +851,38 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (errorCode === MediaError.MEDIA_ERR_ABORTED) return;
 
       console.warn('[player] audio error, auto-skipping:', errorCode, audio.error?.message);
+
+      // ── First-chance recovery: stream URL likely went stale. Re-resolve
+      //    once with a forced cache-bust, then retry the same song. Only skip
+      //    if the refreshed URL also fails. ──
+      const cur = queue[currentIndex];
+      const looksStale =
+        errorCode === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED ||
+        errorCode === MediaError.MEDIA_ERR_NETWORK ||
+        errorCode === MediaError.MEDIA_ERR_DECODE;
+      if (
+        cur &&
+        looksStale &&
+        cur.artist &&
+        cur.title &&
+        !recoveryAttempted.has(cur.id)
+      ) {
+        recoveryAttempted.add(cur.id);
+        try {
+          const fresh = await resolveAudioUrl(cur, { forceRefresh: true });
+          if (fresh && fresh !== cur.audio_url) {
+            const refreshed = { ...cur, audio_url: fresh };
+            const newQueue = [...queue];
+            newQueue[currentIndex] = refreshed;
+            setQueueState(newQueue);
+            setCurrentSong(refreshed);
+            configureAudioElementSource(audio, buildStreamProxyUrl(fresh));
+            audio.load();
+            await audio.play().catch(() => { /* will fall through to skip below on next error */ });
+            return;
+          }
+        } catch { /* fall through to skip */ }
+      }
 
       if (queue.length === 0) {
         setIsPlaying(false);
