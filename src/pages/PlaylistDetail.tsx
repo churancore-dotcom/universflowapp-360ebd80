@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { hydratePlaylistCoverUrls, loadPlaylistSongs } from '@/lib/streamSongs';
 import PlaylistCover from '@/components/PlaylistCover';
 import SEOHead from '@/components/SEOHead';
+import { publicUrl } from '@/lib/publicUrl';
 
 interface Playlist {
   id: string;
