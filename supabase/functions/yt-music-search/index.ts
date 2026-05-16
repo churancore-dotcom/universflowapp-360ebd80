@@ -197,7 +197,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const limit = Math.max(1, Math.min(50, typeof requestedLimit === 'number' ? requestedLimit : 30));
+    // Cap raised to 100 so artist searches can return a full discography.
+    const limit = Math.max(1, Math.min(100, typeof requestedLimit === 'number' ? requestedLimit : 50));
 
     // ---------- Try Invidious (Railway) FIRST for fresh results ----------
     const INVIDIOUS_INSTANCES = [
