@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  ChevronLeft, Play, Pause, Shuffle, MoreHorizontal, Music, 
+  ChevronLeft, Play, Pause, Shuffle, Music, 
   Plus, Trash2, Edit2, Lock, Globe, Loader2, ListPlus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
