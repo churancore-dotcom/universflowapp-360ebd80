@@ -235,7 +235,7 @@ const PlaylistDetail = () => {
                       toast.error(error?.message || 'Could not create share link');
                       return;
                     }
-                    const url = `${window.location.origin}/p/${data}`;
+                    const url = publicUrl(`/p/${data}`);
                     try {
                       if (navigator.share) {
                         await navigator.share({ title: playlist.title, text: `Listen to "${playlist.title}" on Universflow`, url });
