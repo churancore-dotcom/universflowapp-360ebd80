@@ -29,6 +29,9 @@ import appLogo from '@/assets/app-logo.png';
 import { HomeSkeleton } from '@/components/PageSkeletons';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 import SEOHead from '@/components/SEOHead';
+import PullToRefreshIndicator from '@/components/PullToRefresh';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { triggerHaptic as triggerHapticFn } from '@/hooks/useHaptics';
 
 
 // Simple empty state
