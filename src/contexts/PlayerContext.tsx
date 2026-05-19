@@ -673,7 +673,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
           },
           onError: () => {
-            toast.error('Video source unavailable — skipping');
+            toast.info('Trying another source…');
             youtubeEndCallbackRef.current?.();
           },
         },
@@ -934,7 +934,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (nextIdx === null && queue.length > 1) nextIdx = (currentIndex + 1) % queue.length;
 
       if (nextIdx !== null && nextIdx !== currentIndex) {
-        toast.info('Stream unavailable — playing next song');
+        toast.info('Trying another source…');
         playSongAtIndex(nextIdx, queue);
       } else {
         setIsPlaying(false);
