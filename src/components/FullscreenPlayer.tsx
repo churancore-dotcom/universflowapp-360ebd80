@@ -85,6 +85,9 @@ const FullscreenPlayer = memo(function FullscreenPlayer() {
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [showEqualizer, setShowEqualizer] = useState(false);
   const [direction, setDirection] = useState(0);
+  // Local seek-drag state — prevents the live `progress` updates from snapping
+  // the slider thumb back while the user is dragging it.
+  const [dragProgress, setDragProgress] = useState<number | null>(null);
   const { isPremium } = usePremium();
   const prevSongIdRef = useRef<string | null>(null);
   const navigate = useNavigate();
