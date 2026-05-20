@@ -540,6 +540,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           if (result?.streamUrl) return result.streamUrl;
         } catch { /* fall through */ }
       }
+      if (song.artist && song.title && (opts.forceRefresh || song.source === 'indexed' || !isPlayableUrl(song.audio_url))) {
+        try {
+          const { findSongStreamUrl } = await import('@/lib/jiosaavn');
+          const result = await findSongStreamUrl(song.title, song.artist, opts);
+          if (result?.streamUrl) return result.streamUrl;
+        } catch { /* fall through */ }
+      }
       if (song.artist && song.title) {
         try {
           const result = await resolveIndexedTrack(song.artist, song.title, opts);
