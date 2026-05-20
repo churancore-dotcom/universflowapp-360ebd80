@@ -775,7 +775,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Set source and play immediately
     configureAudioElementSource(audioRef.current, buildStreamProxyUrl(audioUrl));
-    audioRef.current.volume = volume;
+    audioRef.current.muted = false;
+    audioRef.current.volume = volume > 0 ? volume : 0.8;
     audioRef.current.currentTime = 0;
     
     audioRef.current.load();
