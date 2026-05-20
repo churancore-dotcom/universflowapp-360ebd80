@@ -819,6 +819,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
 
+      // Respect the user's Autoplay setting from Settings.
+      const autoplayEnabled = (() => {
+        try { return localStorage.getItem('uf_autoplay') !== 'false'; } catch { return true; }
+      })();
+      if (!autoplayEnabled) {
+        setIsPlaying(false);
+        setProgress(0);
+        return;
+      }
+
       // Move to next song immediately - no async operations
       let nextIdx = getNextIndex(currentIndex, queue.length, shuffle, repeat);
       
