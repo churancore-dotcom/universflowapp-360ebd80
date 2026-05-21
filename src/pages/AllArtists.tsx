@@ -16,6 +16,7 @@ import {
 import { followArtist, unfollowArtist, getUserArtistPrefs } from '@/lib/userArtistPrefs';
 import { CURATED_ARTISTS, ARTIST_CATEGORIES, type ArtistCategory } from '@/lib/curatedArtists';
 import BottomNav from '@/components/BottomNav';
+import SEOHead from '@/components/SEOHead';
 import { toast } from 'sonner';
 import { triggerHaptic } from '@/hooks/useHaptics';
 
