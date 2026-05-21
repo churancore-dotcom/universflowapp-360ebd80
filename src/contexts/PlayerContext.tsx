@@ -180,6 +180,8 @@ const isEqProcessingEnabled = () => {
       settings?.bassBoost > 0 ||
       settings?.reverb > 0 ||
       settings?.spatialAudio ||
+      (settings?.studioSpace && settings.studioSpace !== 'off') ||
+      settings?.lateNight ||
       (settings?.playbackSpeed && settings.playbackSpeed !== 1)
     );
   } catch {
