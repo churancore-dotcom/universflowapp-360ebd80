@@ -180,6 +180,8 @@ const isEqProcessingEnabled = () => {
       settings?.bassBoost > 0 ||
       settings?.reverb > 0 ||
       settings?.spatialAudio ||
+      (settings?.studioSpace && settings.studioSpace !== 'off') ||
+      settings?.lateNight ||
       (settings?.playbackSpeed && settings.playbackSpeed !== 1)
     );
   } catch {
@@ -266,9 +268,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [showPrerollAd, setShowPrerollAd] = useState(false);
   const [adType, setAdType] = useState<'start' | 'end'>('start');
   const [pendingSong, setPendingSong] = useState<{ song: Song; offlineUrl?: string | null; songsQueue?: Song[] } | null>(null);
-  const [songsPlayedSinceAd, setSongsPlayedSinceAd] = useState(0);
-  const [isPremiumUser, setIsPremiumUser] = useState(false);
-  const AD_FREQUENCY = 3; // Show ad every 3 songs
   
   // Single audio element - simpler approach
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -318,40 +317,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }));
     } catch { /* quota or disabled */ }
   }, [queue, currentIndex, currentSong]);
-
-  // Check premium status on mount — server-authoritative via RPC.
-  // The boolean here only controls pre-roll ad frequency UX; actual premium
-  // content access is enforced by RLS policies (has_premium_subscription RPC)
-  // on every read of premium-only songs/sessions. A user who flips this client
-  // flag will still hit RLS denials on premium tracks.
-  useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setIsPremiumUser(false);
-          return;
-        }
-
-        // Use the security-definer RPC instead of trusting client-readable
-        // subscription rows. Identical logic, but it's the same source of truth
-        // RLS uses — so client + server can never disagree.
-        const { data, error } = await supabase.rpc('has_premium_subscription', { _user_id: user.id });
-        setIsPremiumUser(!error && data === true);
-      } catch {
-        setIsPremiumUser(false);
-      }
-    };
-    checkStatus();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkStatus();
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
 
   // Track whether audio was playing before going to background
   const wasPlayingRef = useRef(false);
@@ -510,10 +475,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         a.addEventListener('loadedmetadata', restore, { once: true });
       } catch { /* ignore */ }
     };
+    const onEqStorageChanged = (e: StorageEvent) => {
+      if (e.key === EQ_SETTINGS_KEY) onEqChanged();
+    };
     window.addEventListener('uf-eq-changed', onEqChanged);
-    window.addEventListener('storage', (e) => { if (e.key === EQ_SETTINGS_KEY) onEqChanged(); });
+    window.addEventListener('storage', onEqStorageChanged);
     return () => {
       window.removeEventListener('uf-eq-changed', onEqChanged);
+      window.removeEventListener('storage', onEqStorageChanged);
     };
   }, [currentSong?.audio_url]);
 
@@ -1225,35 +1194,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }, 30000);
     }
   }, [isPlayableUrl, queue, resolveAudioUrl, volume, playYouTubeFallback, teardownYouTubePlayback]);
-
-  // Check premium status from database
-  const checkPremiumStatus = useCallback(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setIsPremiumUser(false);
-        return false;
-      }
-
-      const { data } = await supabase
-        .from('user_subscriptions')
-        .select('subscription_type, status, expires_at')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (data) {
-        const isExpired = data.expires_at && new Date(data.expires_at) < new Date();
-        const isPremium = data.subscription_type !== 'free' && data.status === 'active' && !isExpired;
-        setIsPremiumUser(isPremium);
-        return isPremium;
-      }
-      setIsPremiumUser(false);
-      return false;
-    } catch {
-      setIsPremiumUser(false);
-      return false;
-    }
-  }, []);
 
   const playSong = useCallback((song: Song, offlineUrl?: string | null, songsQueue?: Song[]) => {
     // Spotify-like behavior: a tap must start playback immediately. Ads/premium
