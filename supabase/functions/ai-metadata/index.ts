@@ -1,10 +1,29 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Restrict CORS to known first-party origins (was '*'). This is a paid AI
+// endpoint — a wildcard let any malicious site spend our LOVABLE_API_KEY
+// credits via a victim's bearer token.
+const ALLOWED_ORIGINS = new Set([
+  'https://universflow.in',
+  'https://www.universflow.in',
+  'https://universflowapp.lovable.app',
+  'http://localhost:8080',
+  'http://localhost:5173',
+  'capacitor://localhost',
+  'https://localhost',
+]);
+function pickOrigin(req: Request) {
+  const o = req.headers.get('origin') ?? '';
+  return ALLOWED_ORIGINS.has(o) ? o : 'https://universflow.in';
+}
+function buildCors(req: Request): Record<string, string> {
+  return {
+    'Access-Control-Allow-Origin': pickOrigin(req),
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+}
 
 interface MetadataResult {
   success: boolean;
@@ -15,9 +34,11 @@ interface MetadataResult {
 }
 
 serve(async (req) => {
+  const corsHeaders = buildCors(req);
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
 
   try {
     // Authentication check
