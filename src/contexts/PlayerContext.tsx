@@ -759,6 +759,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!isPlayableUrl(audioUrl)) {
       try {
         const resolved = await resolveAudioUrl(song);
+        if (mySeq !== playRequestSeqRef.current) return; // superseded by newer tap
         if (resolved) {
           audioUrl = resolved;
           // Update the song in queue with resolved URL
@@ -772,10 +773,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           return;
         }
       } catch {
+        if (mySeq !== playRequestSeqRef.current) return;
         setIsPlaying(false);
         return;
       }
     }
+
+    // Final race guard before we actually touch the <audio> element.
+    if (mySeq !== playRequestSeqRef.current) return;
 
     // ── YouTube IFrame fallback path ──
     if (isYouTubeFallbackUrl(audioUrl)) {
@@ -798,6 +803,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Set source and play immediately
     configureAudioElementSource(audioRef.current, buildStreamProxyUrl(audioUrl));
+
     audioRef.current.volume = volume;
     audioRef.current.currentTime = 0;
     
