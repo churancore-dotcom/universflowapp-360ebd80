@@ -22,20 +22,45 @@ const isNative = () =>
 // trigger a manual retry without needing to remount the hook.
 let lastToken: string | null = null;
 let lastDeviceMeta: Record<string, unknown> = {};
+let listenersReady = false;
+let setupPromise: Promise<'granted' | 'denied' | 'unsupported'> | null = null;
 
 async function upsertToken(token: string, meta: Record<string, unknown>) {
   const { data } = await supabase.auth.getUser();
   const uid = data?.user?.id;
   if (!uid) return; // will retry on next auth change
-  await supabase.from('device_tokens').upsert(
-    {
-      user_id: uid,
-      token,
-      platform: 'android',
-      device_info: { ...meta, last_seen_at: new Date().toISOString() },
-    },
-    { onConflict: 'token' },
-  );
+  const { error } = await supabase.rpc('register_device_token', {
+    _token: token,
+    _platform: 'android',
+    _device_info: { ...meta, last_seen_at: new Date().toISOString() },
+  });
+  if (error) throw error;
+}
+
+async function collectDeviceMeta() {
+  let deviceMeta: Record<string, unknown> = { ua: navigator.userAgent };
+  try {
+    const { Device } = await import('@capacitor/device');
+    const [info, langCode] = await Promise.all([
+      Device.getInfo(),
+      Device.getLanguageCode().catch(() => ({ value: '' })),
+    ]);
+    deviceMeta = {
+      ...deviceMeta,
+      model: info.model,
+      manufacturer: info.manufacturer,
+      os: info.operatingSystem,
+      os_version: info.osVersion,
+      platform: info.platform,
+      web_view_version: info.webViewVersion,
+      is_virtual: info.isVirtual,
+      language: langCode?.value,
+    };
+  } catch (metaErr) {
+    console.warn('[Push] device meta unavailable', metaErr);
+  }
+  lastDeviceMeta = deviceMeta;
+  return deviceMeta;
 }
 
 export function usePushRegistration() {
