@@ -23,7 +23,6 @@ const isNative = () =>
 let lastToken: string | null = null;
 let lastDeviceMeta: Record<string, unknown> = {};
 let listenersReady = false;
-let setupPromise: Promise<'granted' | 'denied' | 'unsupported'> | null = null;
 
 async function upsertToken(token: string, meta: Record<string, unknown>) {
   const { data } = await supabase.auth.getUser();
@@ -121,7 +120,7 @@ export function usePushRegistration() {
       }
     });
 
-    setupPromise = (async () => {
+    (async () => {
       try {
         const { PushNotifications } = await import('@capacitor/push-notifications');
 
@@ -175,8 +174,6 @@ export function usePushRegistration() {
 export async function requestPushPermissionAndRegister(): Promise<'granted' | 'denied' | 'unsupported'> {
   if (!isNative()) return 'unsupported';
   try {
-    if (setupPromise) return await setupPromise;
-
     const { PushNotifications } = await import('@capacitor/push-notifications');
     let perm = await PushNotifications.checkPermissions();
     if (perm.receive !== 'granted') {
