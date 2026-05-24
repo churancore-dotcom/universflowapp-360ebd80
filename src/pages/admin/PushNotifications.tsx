@@ -219,6 +219,12 @@ const PushNotifications = () => {
             'Push not delivered: 0 devices registered for this audience',
             { description: 'Users must open the Android app at least once before they can receive push notifications.' },
           );
+        } else if ((data.failure_count ?? 0) > 0 && (data.success_count ?? 0) === 0) {
+          pushOk = false;
+          const diagnostic = Array.isArray(data.diagnostics) && data.diagnostics[0]?.body
+            ? String(data.diagnostics[0].body)
+            : 'FCM rejected the registered device token.';
+          toast.error('Push failed at Firebase delivery', { description: diagnostic.slice(0, 160) });
         } else {
           toast.success(
             `Push delivered${who} → ${data.success_count}/${data.sent} devices` +
