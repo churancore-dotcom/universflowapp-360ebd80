@@ -128,6 +128,13 @@ const RegisteredDevices = () => {
       return;
     }
     if (data?.success) {
+      if ((data.failure_count ?? 0) > 0 && (data.success_count ?? 0) === 0) {
+        const diagnostic = Array.isArray(data.diagnostics) && data.diagnostics[0]?.body
+          ? String(data.diagnostics[0].body)
+          : 'FCM rejected the registered device token.';
+        toast.error('Push failed at Firebase delivery', { description: diagnostic.slice(0, 160) });
+        return;
+      }
       toast.success(`Sent → ${data.success_count}/${data.sent} devices`);
       setComposeFor(null);
       setDraft({ title: '', body: '', deep_link: '/home' });
