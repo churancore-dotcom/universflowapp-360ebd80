@@ -101,6 +101,11 @@ function primaryArtists(song: SaavnSong): string {
   return song?.artist || '';
 }
 
+function albumName(album: SaavnSong['album']): string {
+  if (!album) return '';
+  return typeof album === 'string' ? album : album.name || '';
+}
+
 const clean = (value = '') => decodeEntities(value).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
 function scoreSong(song: SaavnSong, title: string, artist = ''): number {
@@ -151,7 +156,7 @@ export async function searchSongsAsTracks(query: string, limit = 30): Promise<In
         id: `saavn-${song.id}`,
         title: decodeEntities(song.name || song.title || ''),
         artist: decodeEntities(primaryArtists(song)),
-        album: decodeEntities(song.album?.name || song.album || ''),
+        album: decodeEntities(albumName(song.album)),
         cover_url: bestImage(song.image),
         duration: typeof song.duration === 'number' ? song.duration : Number(song.duration) || undefined,
         audio_url: audio || 'resolving',
@@ -167,8 +172,8 @@ export async function getSongStreamUrl(songId: string, opts: { forceRefresh?: bo
   if (!opts.forceRefresh && cache.has(id)) return cache.get(id);
 
   try {
-    const data = await fetchJson(`${API}/api/songs/${id}`);
-    const song = data.data?.[0] || data.data;
+    const data = await fetchJson(`${API}/api/songs/${id}`) as { data?: SaavnSong[] | SaavnSong } | null;
+    const song = Array.isArray(data?.data) ? data.data[0] : data?.data;
     if (!song) return null;
 
     const streamUrl = bestAudio(song.downloadUrl);
@@ -179,7 +184,7 @@ export async function getSongStreamUrl(songId: string, opts: { forceRefresh?: bo
       id: song.id,
       title: decodeEntities(song.name || ''),
       artist: decodeEntities(primaryArtists(song)),
-      album: decodeEntities(song.album?.name || ''),
+      album: decodeEntities(albumName(song.album)),
       duration: song.duration,
       image: bestImage(song.image),
     };
@@ -201,8 +206,8 @@ export async function findSongStreamUrl(title: string, artist = '', opts: { forc
 
   const results = await searchSongs(query, 8);
   const best = (results || [])
-    .filter((song: any) => song?.id)
-    .sort((a: any, b: any) => scoreSong(b, title, artist) - scoreSong(a, title, artist))[0];
+    .filter((song): song is SaavnSong & { id: string } => !!song?.id)
+    .sort((a, b) => scoreSong(b, title, artist) - scoreSong(a, title, artist))[0];
   if (!best?.id) return null;
   if (!isConfidentMatch(best, title, artist)) return null;
 
@@ -213,7 +218,7 @@ export async function findSongStreamUrl(title: string, artist = '', opts: { forc
       id: best.id,
       title: decodeEntities(best.name || best.title || title),
       artist: decodeEntities(primaryArtists(best) || artist),
-      album: decodeEntities(best.album?.name || best.album || ''),
+      album: decodeEntities(albumName(best.album)),
       duration: best.duration,
       image: bestImage(best.image),
     };
