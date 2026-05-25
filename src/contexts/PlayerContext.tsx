@@ -387,7 +387,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setTimeout(() => {
           if (audioRef.current && audioRef.current.readyState < 3 && !audioRef.current.paused) {
             // Nudge currentTime slightly to unstall
-            audioRef.current.currentTime = audioRef.current.currentTime;
+            const at = audioRef.current.currentTime;
+            if (Number.isFinite(at) && at > 0) audioRef.current.currentTime = Math.max(0, at - 0.001);
           }
         }, 2000);
       }
