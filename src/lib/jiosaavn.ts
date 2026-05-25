@@ -73,9 +73,33 @@ function scoreSong(song: any, title: string, artist = ''): number {
   const songArtist = clean(primaryArtists(song));
   const wantedTitle = clean(title);
   const wantedArtist = clean(artist);
-  return (songTitle === wantedTitle ? 100 : songTitle.includes(wantedTitle) ? 65 : 0)
-    + (wantedArtist && songArtist.includes(wantedArtist) ? 35 : 0)
-    + Math.min(20, Math.log10(Math.max(1, Number(song?.playCount) || 1)) * 4);
+  const titleScore = songTitle === wantedTitle
+    ? 100
+    : songTitle.includes(wantedTitle) || wantedTitle.includes(songTitle)
+      ? 65
+      : 0;
+  const artistScore = wantedArtist && songArtist.includes(wantedArtist) ? 35 : 0;
+  return titleScore + artistScore + Math.min(20, Math.log10(Math.max(1, Number(song?.playCount) || 1)) * 4);
+}
+
+function isConfidentMatch(song: any, title: string, artist = ''): boolean {
+  const songTitle = clean(song?.name || song?.title || '');
+  const songArtist = clean(primaryArtists(song));
+  const wantedTitle = clean(title);
+  const wantedArtist = clean(artist);
+
+  if (!songTitle || !wantedTitle) return false;
+  const titleMatches = songTitle === wantedTitle || songTitle.includes(wantedTitle) || wantedTitle.includes(songTitle);
+  if (!titleMatches) return false;
+
+  // When we know the artist, avoid returning a popular but unrelated JioSaavn
+  // result. If this fast path is not confident, the player falls back to the
+  // stricter backend resolver instead of playing the wrong track.
+  if (wantedArtist && songArtist && !songArtist.includes(wantedArtist)) {
+    return songTitle === wantedTitle;
+  }
+
+  return scoreSong(song, title, artist) >= 65;
 }
 
 /**
@@ -145,6 +169,7 @@ export async function findSongStreamUrl(title: string, artist = '', opts: { forc
     .filter((song: any) => song?.id)
     .sort((a: any, b: any) => scoreSong(b, title, artist) - scoreSong(a, title, artist))[0];
   if (!best?.id) return null;
+  if (!isConfidentMatch(best, title, artist)) return null;
 
   const direct = bestAudio(best.downloadUrl);
   if (direct && !opts.forceRefresh) {
