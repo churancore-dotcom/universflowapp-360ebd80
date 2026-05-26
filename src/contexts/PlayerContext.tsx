@@ -1152,6 +1152,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setCurrentSong(song);
     setProgress(0);
     setIsPlaying(true);
+    publishNativeMusicControls(song, true, song.duration);
     
     let playbackSource = offlineUrl || song.audio_url;
 
@@ -1203,6 +1204,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (playPromise) {
         playPromise.catch(err => {
           console.warn('Playback failed:', err?.message);
+          const activeQueue = normalizedQueue && normalizedQueue.length > 1 ? normalizedQueue : queueRef.current;
+          const songIndex = activeQueue.findIndex(s => getSongIdentity(s) === intendedIdentity);
+          if (mySeq === playRequestSeqRef.current && activeQueue.length > 1 && songIndex >= 0) {
+            const fallbackIdx = getNextIndex(songIndex, activeQueue.length, shuffle, repeat) ?? ((songIndex + 1) % activeQueue.length);
+            playSongAtIndex(fallbackIdx, activeQueue);
+            return;
+          }
           setIsPlaying(false);
           toast.error('This song could not start — trying another source helps while the stream refreshes.');
         });
@@ -1253,7 +1261,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }).catch(() => {});
       }, 30000);
     }
-  }, [isPlayableUrl, resolveAudioUrl, volume, playYouTubeFallback, teardownYouTubePlayback]);
+  }, [isPlayableUrl, resolveAudioUrl, volume, playYouTubeFallback, teardownYouTubePlayback, publishNativeMusicControls, getNextIndex, shuffle, repeat, playSongAtIndex]);
 
   const playSong = useCallback((song: Song, offlineUrl?: string | null, songsQueue?: Song[]) => {
     // Spotify-like behavior: a tap must start playback immediately. Ads/premium
