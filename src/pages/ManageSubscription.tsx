@@ -21,6 +21,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePremium } from '@/hooks/usePremium';
 import SEOHead from '@/components/SEOHead';
 
+const formatDebugTime = (iso: string | null) => {
+  if (!iso) return 'Waiting…';
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      day: '2-digit',
+      month: 'short',
+    });
+  } catch {
+    return iso;
+  }
+};
+
 const formatDate = (iso: string | null) => {
   if (!iso) return 'Lifetime';
   try {
@@ -46,7 +61,28 @@ const planLabel = (type?: string) => {
 const ManageSubscription = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isPremium, subscription, isLoading } = usePremium();
+  const {
+    isPremium,
+    subscription,
+    verifiedStatus,
+    subscriptionRow,
+    lastRealtimeUpdate,
+    lastCheckedAt,
+    isLoading,
+    error,
+    refetch,
+  } = usePremium();
+
+  const debugPanel = (
+    <PremiumDebugPanel
+      verifiedStatus={verifiedStatus}
+      subscriptionRow={subscriptionRow}
+      lastRealtimeUpdate={lastRealtimeUpdate}
+      lastCheckedAt={lastCheckedAt}
+      errorMessage={error?.message ?? null}
+      onRefresh={refetch}
+    />
+  );
 
   const memberSince = subscription?.expires_at
     ? null
@@ -88,7 +124,8 @@ const ManageSubscription = () => {
             </button>
             <h1 className="text-[17px] font-semibold absolute left-1/2 -translate-x-1/2">Subscription</h1>
           </header>
-          <main className="px-5 pt-8 text-center">
+          <main className="px-5 pt-8 space-y-5">
+            <div className="text-center">
             <div className="w-20 h-20 mx-auto mb-4 rounded-3xl flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))' }}>
               <Crown className="w-10 h-10 text-primary-foreground" />
@@ -101,6 +138,8 @@ const ManageSubscription = () => {
             >
               Upgrade to Premium
             </button>
+            </div>
+            {debugPanel}
           </main>
           <BottomNav />
         </div>
@@ -275,6 +314,8 @@ const ManageSubscription = () => {
               />
             </div>
           </section>
+
+          {debugPanel}
 
           {/* CTA strip */}
           <motion.div
