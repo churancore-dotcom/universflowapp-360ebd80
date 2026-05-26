@@ -1458,6 +1458,10 @@ export type Database = {
         Args: { p_details?: Json; p_event_type: string; p_severity?: string }
         Returns: string
       }
+      admin_review_payment_request: {
+        Args: { p_request_id: string; p_status: string }
+        Returns: Json
+      }
       check_and_increment_rate_limit: {
         Args: { _endpoint: string; _max_per_minute: number; _user_id: string }
         Returns: boolean
