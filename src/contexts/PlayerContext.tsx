@@ -1519,6 +1519,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     },
     onPause: () => {
       if (audioRef.current) {
+        markIntentionalPause();
         audioRef.current.pause();
       }
     },
@@ -1547,7 +1548,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setProgress(time);
       }
     },
-  }), [currentSong, queue, currentIndex, shuffle, repeat, getNextIndex, playSongAtIndex]);
+  }), [currentSong, queue, currentIndex, shuffle, repeat, getNextIndex, playSongAtIndex, markIntentionalPause]);
 
   const { progress: liveProgress, duration: liveDuration } = usePlayerProgress();
 
