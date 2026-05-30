@@ -307,6 +307,7 @@ const Library = () => {
               </TabsContent>
 
               <TabsContent value="artists" className="mt-0">
+                <h2 className="sr-only">Followed Artists</h2>
                 {loading ? (
                   <LibraryArtistsSkeleton />
                 ) : artists.length === 0 ? (
