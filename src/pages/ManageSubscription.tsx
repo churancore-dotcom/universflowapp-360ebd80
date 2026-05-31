@@ -131,7 +131,6 @@ const ManageSubscription = () => {
               Upgrade to Premium
             </button>
             </div>
-            {debugPanel}
           </main>
           <BottomNav />
         </div>
@@ -307,7 +306,7 @@ const ManageSubscription = () => {
             </div>
           </section>
 
-          {debugPanel}
+          
 
           {/* CTA strip */}
           <motion.div
