@@ -142,7 +142,7 @@ const EqualizerModal = ({ isOpen, onClose }: EqualizerModalProps) => {
   const [bands, setBandsState] = useState<EQBand[]>(
     saved?.bands ? defaultBands.map((b, i) => ({ ...b, gain: saved.bands[i] ?? 0 })) : defaultBands
   );
-  const [bassBoost, setBassBoost] = useState(Math.min(saved?.bassBoost ?? 0, 60));
+  const [bassBoost, setBassBoost] = useState(Math.min(saved?.bassBoost ?? 0, 100));
   const [reverb, setReverb] = useState(Math.min(saved?.reverb ?? 0, 45));
   const [playbackSpeed, setPlaybackSpeed] = useState(saved?.playbackSpeed ?? 1);
   const [spatialAudio, setSpatialAudio] = useState(saved?.spatialAudio ?? false);
