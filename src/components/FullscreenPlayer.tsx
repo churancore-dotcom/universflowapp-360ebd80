@@ -85,6 +85,7 @@ const FullscreenPlayer = memo(function FullscreenPlayer() {
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [showEqualizer, setShowEqualizer] = useState(false);
+  const [showQueue, setShowQueue] = useState(false);
   const [direction, setDirection] = useState(0);
   // Local seek-drag state — prevents the live `progress` updates from snapping
   // the slider thumb back while the user is dragging it.
