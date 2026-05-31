@@ -217,9 +217,10 @@ const FullscreenPlayer = memo(function FullscreenPlayer() {
               
               <button 
                 className="w-10 h-10 flex items-center justify-center -mr-2 active:scale-90 transition-transform" 
-                onClick={() => { triggerHaptic('impactLight'); setShowPlaylistModal(true); }}
+                onClick={() => { triggerHaptic('impactLight'); setShowQueue(true); }}
+                aria-label="Open queue"
               >
-                <ListMusic className="w-5 h-5 text-white/80" />
+                <ListOrdered className="w-5 h-5 text-white/80" />
               </button>
             </div>
 
