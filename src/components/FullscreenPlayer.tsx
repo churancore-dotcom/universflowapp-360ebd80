@@ -12,6 +12,7 @@ import SocialShareModal from './SocialShareModal';
 import AddToPlaylistModal from './AddToPlaylistModal';
 import CreatePlaylistModal from './CreatePlaylistModal';
 import EqualizerModal from './EqualizerModal';
+import QueueDrawer from './QueueDrawer';
 import FollowArtistButton from './FollowArtistButton';
 import type { Song } from '@/contexts/PlayerContext';
 import { triggerHaptic } from '@/hooks/useHaptics';
