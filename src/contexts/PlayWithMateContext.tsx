@@ -313,7 +313,14 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        if (Math.abs(localPosition - remotePosition) > 0.9) {
+        // Tolerant drift correction:
+        // - Network broadcasts arrive ~1–2s behind the host clock, so the guest
+        //   is usually slightly AHEAD of the payload. Snapping back every cycle
+        //   is what made the seek bar "reset" mid-song.
+        // - Only re-seek when the guest is meaningfully behind (>3s) or wildly
+        //   ahead (>6s, e.g. host jumped backward).
+        const drift = localPosition - remotePosition;
+        if (drift < -3 || drift > 6) {
           seek(remotePosition);
         }
 
