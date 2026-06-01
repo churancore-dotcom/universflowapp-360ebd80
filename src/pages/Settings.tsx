@@ -14,6 +14,13 @@ import EqualizerModal from '@/components/EqualizerModal';
 
 import { applyTheme, type ThemeMode } from '@/lib/themeBoot';
 import SEOHead from '@/components/SEOHead';
+import {
+  LOCK_SCREEN_THEMES,
+  getStoredLockScreenTheme,
+  setStoredLockScreenTheme,
+  type LockScreenThemeId,
+} from '@/lib/lockScreenTheme';
+import { Lock } from 'lucide-react';
 
 const EQ_KEY = 'eq_settings';
 
@@ -44,6 +51,7 @@ const Settings = () => {
     const s = readEq();
     return typeof s.playbackSpeed === 'number' ? s.playbackSpeed : 1;
   });
+  const [lockTheme, setLockTheme] = useState<LockScreenThemeId>(getStoredLockScreenTheme);
 
   useEffect(() => {
     const calcSize = async () => {
@@ -116,6 +124,19 @@ const Settings = () => {
     setTheme(t);
     applyTheme(t);
     toast.success(`${themes.find(x => x.id === t)?.label} theme applied`);
+  };
+
+  const handleLockTheme = (id: LockScreenThemeId, premiumLocked: boolean) => {
+    if (premiumLocked) {
+      toast.error('Premium required to use this lock screen', {
+        action: { label: 'Upgrade', onClick: () => navigate('/premium') },
+      });
+      return;
+    }
+    setLockTheme(id);
+    setStoredLockScreenTheme(id);
+    const label = LOCK_SCREEN_THEMES.find(t => t.id === id)?.label ?? '';
+    toast.success(`${label} lock screen applied`);
   };
 
   const handleClearCache = async () => {
