@@ -398,7 +398,14 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
         .on('broadcast', { event: 'suggestion' }, ({ payload }) => {
           const s = payload as MateSuggestion;
           if (!s?.title || !s?.artist) return;
-          // Only host receives suggestions actively; guests can also see for context
+          // Filter out suggestions for the song that is ALREADY playing in
+          // the room — keeps the host's inbox clean.
+          const currentId = currentSong?.id;
+          const currentTitle = (currentSong?.title || '').toLowerCase();
+          const isSameAsPlaying =
+            (currentId && (s as any).id && currentId === (s as any).id) ||
+            (currentTitle && s.title.toLowerCase() === currentTitle);
+          if (isSameAsPlaying) return;
           if (nextRoom.role === 'host' && s.userId !== user.id) {
             setSuggestions((prev) => {
               const next = [...prev.filter((x) => x.id !== s.id), s];
