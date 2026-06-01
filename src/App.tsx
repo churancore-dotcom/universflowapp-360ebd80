@@ -310,7 +310,7 @@ const AppContent = () => {
       </AnimatePresence>
       <PrerollAdWrapper />
       <GlobalPlayerLayer />
-      <MateHeartButton />
+      <JamHeartButton />
       <PostAuthGate />
       <Suspense fallback={null}>
         <DownloadQueuePanel />
