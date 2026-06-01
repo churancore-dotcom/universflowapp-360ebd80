@@ -153,7 +153,17 @@ export const PlayWithMateProvider = ({ children }: { children: ReactNode }) => {
   const restoringRef = useRef(false);
   const applyingRemoteStateRef = useRef(false);
   const currentSongRef = useRef<Song | null>(currentSong);
-  useEffect(() => { currentSongRef.current = currentSong; }, [currentSong]);
+  useEffect(() => {
+    currentSongRef.current = currentSong;
+    // When the host moves to a new track, drop any pending suggestion that
+    // matches it — keeps the inbox in sync with reality.
+    if (!currentSong) return;
+    const norm = (v: string) => v.toLowerCase().trim().replace(/\s+/g, ' ');
+    const sigCur = `${norm(currentSong.title || '')}|${norm(currentSong.artist || '')}`;
+    setSuggestions((prev) =>
+      prev.filter((s) => `${norm(s.title)}|${norm(s.artist)}` !== sigCur && s.id !== currentSong.id),
+    );
+  }, [currentSong]);
   const progressRef = { get current() { return playerProgressStore.getProgress(); } } as { current: number };
 
   const clearRealtime = useCallback(() => {
