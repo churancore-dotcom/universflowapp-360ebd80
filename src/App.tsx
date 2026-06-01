@@ -327,13 +327,13 @@ const App = () => {
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <AuthProvider>
             <PlayerProvider>
-              <PlayWithMateProvider>
+              <JamQueueProvider>
                 <DownloadProvider>
                   <TooltipProvider>
                     <AppContent />
                   </TooltipProvider>
                 </DownloadProvider>
-              </PlayWithMateProvider>
+              </JamQueueProvider>
             </PlayerProvider>
           </AuthProvider>
         </BrowserRouter>
