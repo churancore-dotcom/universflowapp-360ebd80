@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Settings, LogOut, Shield, Music, Heart, Clock, ChevronRight, Crown, Edit2, Check, X, Star, Sparkles } from 'lucide-react';
+import { User, Mail, Settings, LogOut, Shield, Music, Heart, Clock, ChevronRight, Crown, Edit2, Check, X, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +7,7 @@ import { usePremium } from '@/hooks/usePremium';
 import BottomNav from '@/components/BottomNav';
 import RedeemCodeModal from '@/components/RedeemCodeModal';
 import PremiumBadge from '@/components/PremiumBadge';
-import VibeCardModal from '@/components/VibeCardModal';
+import ProfileAuraCard from '@/components/ProfileAuraCard';
 
 import ReviewModal from '@/components/ReviewModal';
 import ReviewsSheet from '@/components/ReviewsSheet';
@@ -30,7 +30,7 @@ const Profile = () => {
   const [showRedeemCode, setShowRedeemCode] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [showReviewsList, setShowReviewsList] = useState(false);
-  const [showVibeCard, setShowVibeCard] = useState(false);
+  
   const [profileData, setProfileData] = useState<ProfileData>({ username: null, username_changed: false });
   const [profileReady, setProfileReady] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
