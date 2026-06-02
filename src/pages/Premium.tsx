@@ -548,57 +548,92 @@ const PlanCard = memo(function PlanCard({
     <motion.button
       onClick={onSelect}
       whileTap={{ scale: 0.99 }}
-      className="w-full text-left rounded-3xl p-5 relative overflow-hidden transition-all"
+      className="w-full text-left rounded-3xl p-[1.5px] relative transition-all"
       style={{
         background: selected
-          ? 'linear-gradient(160deg, hsl(var(--primary) / 0.22) 0%, hsl(var(--card)) 60%, hsl(var(--accent) / 0.18) 100%)'
-          : 'hsl(var(--card) / 0.6)',
-        border: selected ? '1.5px solid hsl(var(--primary) / 0.6)' : '0.5px solid hsl(var(--border))',
-        boxShadow: selected ? '0 20px 50px -15px hsl(var(--primary) / 0.45)' : 'none',
+          ? 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 50%, hsl(var(--primary)) 100%)'
+          : recommended
+          ? 'linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--accent) / 0.4), hsl(var(--primary) / 0.5))'
+          : 'hsl(var(--border) / 0.6)',
+        boxShadow: selected
+          ? '0 22px 55px -15px hsl(var(--primary) / 0.55)'
+          : recommended
+          ? '0 12px 35px -15px hsl(var(--primary) / 0.35)'
+          : 'none',
       }}
     >
       {recommended && (
         <div
-          className="absolute -top-px right-5 px-3 py-1 rounded-b-lg text-[9px] font-bold tracking-widest uppercase"
+          className="absolute -top-2.5 right-5 px-2.5 py-1 rounded-full text-[9px] font-bold tracking-[0.18em] uppercase z-10 flex items-center gap-1"
           style={{
-            background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
-            color: 'hsl(var(--primary-foreground))',
+            background: 'linear-gradient(135deg, #f5c542, #e8a317)',
+            color: '#1a0f00',
+            boxShadow: '0 6px 18px -4px rgba(245, 197, 66, 0.6)',
           }}
         >
-          Recommended
+          <Sparkles className="w-2.5 h-2.5" fill="currentColor" />
+          Most Popular
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all"
-            style={{
-              background: selected ? 'hsl(var(--primary))' : 'transparent',
-              border: selected ? 'none' : '1.5px solid hsl(var(--muted-foreground) / 0.4)',
-            }}
-          >
-            {selected && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3.5} />}
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-[17px] font-bold">{title}</p>
-              {badge && (
-                <span
-                  className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"
-                  style={{ background: 'hsl(var(--accent) / 0.2)', color: 'hsl(var(--accent))' }}
-                >
-                  {badge}
-                </span>
-              )}
-            </div>
-            <p className="text-[12px] text-muted-foreground mt-0.5 truncate">{tagline}</p>
-          </div>
-        </div>
+      <div
+        className="rounded-[22px] p-5 relative overflow-hidden"
+        style={{
+          background: selected
+            ? 'linear-gradient(160deg, hsl(var(--primary) / 0.18) 0%, hsl(var(--card)) 55%, hsl(var(--accent) / 0.15) 100%)'
+            : 'linear-gradient(135deg, hsl(var(--card) / 0.85), hsl(var(--card) / 0.55))',
+          backdropFilter: 'blur(12px)',
+        }}
+      >
+        {selected && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'linear-gradient(115deg, transparent 40%, hsl(0 0% 100% / 0.06) 50%, transparent 60%)' }}
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
+          />
+        )}
 
-        <div className="text-right shrink-0">
-          <p className="text-[24px] font-bold leading-none">₹{price}</p>
-          <p className="text-[11px] text-muted-foreground mt-1">{perMonth}</p>
+        <div className="flex items-center justify-between gap-3 relative">
+          <div className="flex items-center gap-3 min-w-0">
+            <motion.div
+              animate={selected ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+              transition={{ duration: 1.6, repeat: selected ? Infinity : 0, ease: 'easeInOut' }}
+              className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+              style={{
+                background: selected
+                  ? 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))'
+                  : 'transparent',
+                border: selected ? 'none' : '1.5px solid hsl(var(--muted-foreground) / 0.4)',
+                boxShadow: selected ? '0 6px 18px -4px hsl(var(--primary) / 0.5)' : 'none',
+              }}
+            >
+              {selected && <Check className="w-4 h-4 text-primary-foreground" strokeWidth={3.5} />}
+            </motion.div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-[17px] font-bold">{title}</p>
+                {badge && (
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"
+                    style={{
+                      background: 'linear-gradient(135deg, hsl(var(--accent) / 0.25), hsl(var(--primary) / 0.18))',
+                      color: 'hsl(var(--accent))',
+                      border: '0.5px solid hsl(var(--accent) / 0.35)',
+                    }}
+                  >
+                    {badge}
+                  </span>
+                )}
+              </div>
+              <p className="text-[12px] text-muted-foreground mt-0.5 truncate">{tagline}</p>
+            </div>
+          </div>
+
+          <div className="text-right shrink-0">
+            <p className="text-[26px] font-bold leading-none tracking-tight">₹{price}</p>
+            <p className="text-[11px] text-muted-foreground mt-1">{perMonth}</p>
+          </div>
         </div>
       </div>
     </motion.button>
