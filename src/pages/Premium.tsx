@@ -185,21 +185,33 @@ const PremiumPage = memo(function PremiumPage() {
         className="min-h-screen bg-background pb-44 relative overflow-hidden"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
       >
-        {/* Editorial backdrop */}
-        <div
-          className="absolute -top-48 left-1/2 -translate-x-1/2 w-[760px] h-[760px] rounded-full opacity-40 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.55), transparent 70%)', filter: 'blur(100px)' }}
-        />
-        <div
-          className="absolute top-[40%] -right-32 w-[420px] h-[420px] rounded-full opacity-25 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, hsl(var(--accent) / 0.5), transparent 70%)', filter: 'blur(80px)' }}
-        />
+        {/* ─── Aurora gradient mesh backdrop ─── */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <motion.div
+            className="absolute -top-40 left-1/2 -translate-x-1/2 w-[820px] h-[820px] rounded-full"
+            style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.55), transparent 65%)', filter: 'blur(110px)' }}
+            animate={{ scale: [1, 1.08, 1], opacity: [0.45, 0.6, 0.45] }}
+            transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute top-[35%] -right-32 w-[460px] h-[460px] rounded-full"
+            style={{ background: 'radial-gradient(circle, hsl(var(--accent) / 0.55), transparent 65%)', filter: 'blur(90px)' }}
+            animate={{ scale: [1.05, 1, 1.05], opacity: [0.3, 0.45, 0.3] }}
+            transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute top-[55%] -left-24 w-[380px] h-[380px] rounded-full"
+            style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.4), transparent 70%)', filter: 'blur(100px)' }}
+            animate={{ scale: [1, 1.1, 1], opacity: [0.25, 0.4, 0.25] }}
+            transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </div>
 
         {/* Header */}
         <motion.header
           className="sticky top-0 z-30 px-2 pt-4 pb-3 flex items-center safe-area-pt"
           style={{
-            background: 'hsl(var(--background) / 0.85)',
+            background: 'hsl(var(--background) / 0.7)',
             backdropFilter: 'blur(40px) saturate(180%)',
             WebkitBackdropFilter: 'blur(40px) saturate(180%)',
           }}
@@ -215,34 +227,74 @@ const PremiumPage = memo(function PremiumPage() {
           </motion.button>
         </motion.header>
 
-        <main className="relative px-5 pt-2 space-y-7">
-          {/* Editorial hero */}
+        <main className="relative px-5 pt-2 space-y-8">
+          {/* ─── Cinematic hero ─── */}
           <motion.section
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
             transition={{ ...iosSpring, delay: 0.05 }}
-            className="text-center pt-6 pb-1"
+            className="text-center pt-8 pb-2 relative"
           >
+            {/* Animated crown with sheen */}
             <motion.div
-              initial={{ scale: 0, rotate: -15 }} animate={{ scale: 1, rotate: 0 }}
-              transition={{ ...iosSpring, delay: 0.1 }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-7"
-              style={{ background: 'hsl(var(--primary) / 0.12)', border: '0.5px solid hsl(var(--primary) / 0.3)' }}
+              initial={{ scale: 0, y: 20 }} animate={{ scale: 1, y: 0 }}
+              transition={{ ...iosBounce, delay: 0.1 }}
+              className="relative inline-flex items-center justify-center mb-6"
             >
-              <Crown className="w-3 h-3 text-primary" fill="currentColor" />
-              <span className="text-[10px] font-bold tracking-[0.22em] text-primary uppercase">
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.5), transparent 70%)', filter: 'blur(30px)' }}
+                animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <div
+                className="relative w-[72px] h-[72px] rounded-[22px] flex items-center justify-center overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
+                  boxShadow: '0 25px 60px -15px hsl(var(--primary) / 0.7), inset 0 1px 0 hsl(0 0% 100% / 0.3)',
+                }}
+              >
+                <Crown className="w-9 h-9 text-primary-foreground relative z-10" fill="currentColor" />
+                <motion.div
+                  className="absolute inset-0"
+                  style={{ background: 'linear-gradient(115deg, transparent 35%, hsl(0 0% 100% / 0.45) 50%, transparent 65%)' }}
+                  animate={{ x: ['-100%', '120%'] }}
+                  transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 1.6, ease: 'easeInOut' }}
+                />
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.18, ...iosSpring }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-5"
+              style={{
+                background: 'hsl(var(--primary) / 0.1)',
+                border: '0.5px solid hsl(var(--primary) / 0.35)',
+                backdropFilter: 'blur(12px)',
+              }}
+            >
+              <Sparkles className="w-3 h-3 text-primary" fill="currentColor" />
+              <span className="text-[10px] font-bold tracking-[0.25em] text-primary uppercase">
                 Universflow Premium
               </span>
             </motion.div>
 
-            <h1 className="text-[42px] font-bold leading-[0.95] tracking-tight mb-4">
-              Univers Flow<br />
-              <span style={{
-                background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              }}>Premium</span>
+            <h1 className="text-[44px] font-bold leading-[0.92] tracking-tight mb-4">
+              Sound, the way<br />
+              <span
+                className="inline-block"
+                style={{
+                  background: 'linear-gradient(120deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 50%, hsl(var(--primary)) 100%)',
+                  backgroundSize: '200% 100%',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                  animation: 'auroraShift 6s ease-in-out infinite',
+                }}
+              >
+                it deserves.
+              </span>
             </h1>
             <p className="text-muted-foreground text-[15px] max-w-[320px] mx-auto leading-relaxed">
-              Listen the way it was meant to be. Studio-grade audio. No interruptions. Built for people who really listen.
+              Studio-grade audio. Zero interruptions. Built for people who really listen.
             </p>
           </motion.section>
 
@@ -251,29 +303,35 @@ const PremiumPage = memo(function PremiumPage() {
             <motion.section
               initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
               transition={iosSpring}
-              className="rounded-3xl p-7 text-center"
+              className="rounded-3xl p-7 text-center relative overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, hsl(var(--primary) / 0.22), hsl(var(--accent) / 0.15))',
-                border: '1px solid hsl(var(--primary) / 0.4)',
-                boxShadow: '0 20px 60px -20px hsl(var(--primary) / 0.5)',
+                background: 'linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--accent) / 0.18))',
+                border: '1px solid hsl(var(--primary) / 0.45)',
+                boxShadow: '0 25px 70px -20px hsl(var(--primary) / 0.55)',
               }}
             >
-              <Crown className="w-11 h-11 text-primary mx-auto mb-3" fill="currentColor" />
-              <p className="text-[20px] font-bold mb-1">You're Premium</p>
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: 'linear-gradient(115deg, transparent 40%, hsl(0 0% 100% / 0.08) 50%, transparent 60%)' }}
+                animate={{ x: ['-100%', '100%'] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+              />
+              <Crown className="w-12 h-12 text-primary mx-auto mb-3 relative" fill="currentColor" />
+              <p className="text-[22px] font-bold mb-1 relative">You're Premium</p>
               {expiryText && (
-                <p className="text-[13px] text-muted-foreground">Active until {expiryText}</p>
+                <p className="text-[13px] text-muted-foreground relative">Active until {expiryText}</p>
               )}
               <button
                 onClick={handleUpgrade}
-                className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-semibold"
-                style={{ background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))' }}
+                className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-semibold relative"
+                style={{ background: 'hsl(var(--primary) / 0.18)', color: 'hsl(var(--primary))' }}
               >
                 Extend membership
               </button>
             </motion.section>
           )}
 
-          {/* Pending payment — live progress (shown when user has a pending request) */}
+          {/* Pending payment banner */}
           {!isPremium && pending && (
             <PendingProgressBanner pending={pending} />
           )}
@@ -285,20 +343,17 @@ const PremiumPage = memo(function PremiumPage() {
               transition={{ ...iosSpring, delay: 0.15 }}
               className="space-y-3"
             >
-              {/* 2-month — sweet spot (recommended) */}
               <PlanCard
                 planId="bimonthly"
                 selected={selectedPlan === 'bimonthly'}
                 onSelect={() => { haptics.light(); setSelectedPlan('bimonthly'); }}
-                badge={`Most popular · Save ${bimonthlySave}%`}
+                badge={`Save ${bimonthlySave}%`}
                 title="2 Months"
                 price={bimonthly}
                 perMonth={`₹${bimonthlyPerMo}/mo`}
-                tagline="The sweet spot · 60 days of premium"
+                tagline="The sweet spot · 60 days"
                 recommended
               />
-
-              {/* 3-month */}
               <PlanCard
                 planId="quarterly"
                 selected={selectedPlan === 'quarterly'}
@@ -307,35 +362,17 @@ const PremiumPage = memo(function PremiumPage() {
                 title="3 Months"
                 price={quarterly}
                 perMonth={`₹${quarterlyPerMo}/mo`}
-                tagline="Longer commitment · 90 days"
+                tagline="Best value · 90 days"
               />
-
-              {/* Monthly */}
               <PlanCard
                 planId="monthly"
                 selected={selectedPlan === 'monthly'}
                 onSelect={() => { haptics.light(); setSelectedPlan('monthly'); }}
                 title="Monthly"
                 price={monthly}
-                perMonth="30 days of premium"
+                perMonth="30 days"
                 tagline="Try it for a month"
               />
-
-              <motion.button
-                onClick={handleUpgrade}
-                whileTap={{ scale: 0.98 }}
-                className="w-full mt-4 py-[18px] rounded-2xl font-bold text-[17px] flex items-center justify-center gap-2"
-                style={{
-                  background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
-                  color: 'hsl(var(--primary-foreground))',
-                  boxShadow: '0 18px 45px -10px hsl(var(--primary) / 0.6)',
-                }}
-              >
-                Continue · ₹{selectedPrice}
-                <Sparkles className="w-5 h-5" fill="currentColor" />
-              </motion.button>
-
-
             </motion.section>
           )}
 
@@ -345,12 +382,13 @@ const PremiumPage = memo(function PremiumPage() {
             transition={{ ...iosSpring, delay: 0.25 }}
             className="pt-2"
           >
-            <div className="mb-4 px-1">
-              <p className="text-[10px] font-bold tracking-[0.22em] text-primary uppercase mb-2">
+            <div className="mb-5 px-1">
+              <p className="text-[10px] font-bold tracking-[0.25em] text-primary uppercase mb-2">
                 Included
               </p>
-              <h2 className="text-[26px] font-bold tracking-tight leading-tight">
-                Everything you need.<br />Nothing you don't.
+              <h2 className="text-[28px] font-bold tracking-tight leading-[1.05]">
+                Everything you need.<br />
+                <span className="text-muted-foreground">Nothing you don't.</span>
               </h2>
             </div>
 
@@ -358,14 +396,22 @@ const PremiumPage = memo(function PremiumPage() {
               {FEATURES.map((f, i) => (
                 <motion.div
                   key={f.title}
-                  initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + i * 0.03, ...iosSpring }}
-                  className="flex items-center gap-4 p-4 rounded-2xl"
-                  style={{ background: 'hsl(var(--card) / 0.5)', border: '0.5px solid hsl(var(--border) / 0.5)' }}
+                  initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ delay: i * 0.04, ...iosSpring }}
+                  className="flex items-center gap-4 p-4 rounded-2xl relative overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(var(--card) / 0.7), hsl(var(--card) / 0.4))',
+                    border: '0.5px solid hsl(var(--border) / 0.6)',
+                    backdropFilter: 'blur(10px)',
+                  }}
                 >
                   <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.08))' }}
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 relative"
+                    style={{
+                      background: 'linear-gradient(135deg, hsl(var(--primary) / 0.28), hsl(var(--accent) / 0.12))',
+                      boxShadow: 'inset 0 1px 0 hsl(0 0% 100% / 0.08)',
+                    }}
                   >
                     <f.icon className="w-5 h-5 text-primary" />
                   </div>
@@ -392,36 +438,75 @@ const PremiumPage = memo(function PremiumPage() {
             ].map(t => (
               <div
                 key={t.label}
-                className="text-center py-3 rounded-2xl"
-                style={{ background: 'hsl(var(--card) / 0.4)', border: '0.5px solid hsl(var(--border) / 0.4)' }}
+                className="text-center py-3.5 rounded-2xl"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(var(--card) / 0.6), hsl(var(--card) / 0.3))',
+                  border: '0.5px solid hsl(var(--border) / 0.5)',
+                  backdropFilter: 'blur(10px)',
+                }}
               >
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t.label}</p>
+                <p className="text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground">{t.label}</p>
                 <p className="text-[13px] font-semibold mt-0.5">{t.value}</p>
               </div>
             ))}
           </motion.section>
 
-          {/* Closing CTA */}
+          {/* Redeem code link */}
           {!isPremium && !pending && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ ...iosSpring, delay: 0.6 }}
-              className="text-center py-6"
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+              className="text-center pt-2"
             >
-              <p className="text-[24px] font-bold tracking-tight leading-tight mb-4">
-                Ready when you are.
-              </p>
-              <motion.button
-                onClick={handleUpgrade}
-                whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-bold text-[16px]"
-                style={{ background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}
+              <button
+                onClick={() => { haptics.light(); setShowRedeem(true); }}
+                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary py-2"
               >
-                Become Premium
-              </motion.button>
-            </motion.section>
+                <Gift className="w-4 h-4" />
+                Have a code? Redeem here
+              </button>
+            </motion.div>
           )}
         </main>
+
+        {/* ─── Sticky bottom CTA bar ─── */}
+        {!isPremium && !pending && settings && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+            transition={{ ...iosSpring, delay: 0.4 }}
+            className="fixed bottom-[68px] left-0 right-0 z-40 px-4 pb-2 pointer-events-none safe-area-pb"
+          >
+            <div
+              className="max-w-md mx-auto rounded-2xl p-3 pointer-events-auto flex items-center gap-3"
+              style={{
+                background: 'hsl(var(--background) / 0.78)',
+                border: '0.5px solid hsl(var(--border))',
+                backdropFilter: 'blur(30px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+                boxShadow: '0 -10px 40px -10px hsl(var(--background) / 0.6)',
+              }}
+            >
+              <div className="min-w-0 flex-1 pl-2">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  {PLAN_LABEL[selectedPlan]}
+                </p>
+                <p className="text-[18px] font-bold leading-tight">₹{selectedPrice}</p>
+              </div>
+              <motion.button
+                onClick={handleUpgrade}
+                whileTap={{ scale: 0.96 }}
+                className="px-6 py-3.5 rounded-xl font-bold text-[15px] flex items-center gap-2"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
+                  color: 'hsl(var(--primary-foreground))',
+                  boxShadow: '0 12px 30px -8px hsl(var(--primary) / 0.6)',
+                }}
+              >
+                Get Premium
+                <Sparkles className="w-4 h-4" fill="currentColor" />
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
 
         <BottomNav />
 
