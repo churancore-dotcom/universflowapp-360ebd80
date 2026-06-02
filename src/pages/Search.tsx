@@ -140,26 +140,27 @@ const Search = () => {
       return;
     }
 
+    // INSTANT skeleton: flip to "searching" + clear previous rows the moment
+    // the user types, so they always see the loading state — never stale hits.
+    setSearching(true);
+    setIndexedResults([]);
+
     let cancelled = false;
     const timer = setTimeout(async () => {
-      setSearching(true);
       try {
         const cached = getCached<IndexedTrack[]>(SEARCH_CACHE_NAMESPACE, trimmedQuery);
         if (cached) {
-          if (!cancelled) setIndexedResults(cached.filter((track) => !isHiddenTrack(track, hiddenResults)));
+          if (!cancelled) {
+            setIndexedResults(cached.filter((track) => !isHiddenTrack(track, hiddenResults)));
+            setSearching(false);
+          }
           return;
         }
-        // YouTube-style: detect mood + language separately. e.g. "hindi sad
-        // song" → language=hindi, mood=sad. We then fetch BOTH tag charts and
-        // intersect by artist (or rank by overlap) so users actually get sad
-        // Hindi tracks, not English songs whose title contains "sad".
         const { mood, language, pureBrowse } = detectMoodAndLanguage(trimmedQuery);
         const smartQuery = [language, mood, 'song'].filter(Boolean).join(' ') || trimmedQuery;
         const tagJobs: Promise<IndexedTrack[]>[] = [];
         if (language) tagJobs.push(getTagTopTracks(language, 150));
         if (mood) tagJobs.push(getTagTopTracks(mood, 150));
-        // Skip the literal text search when the query is just mood/language
-        // words (e.g. "hindi sad song") — it would just return English title hits.
         const literalJob = pureBrowse
           ? Promise.resolve([] as IndexedTrack[])
           : searchIndexedTracks(trimmedQuery, 200);
@@ -169,15 +170,12 @@ const Search = () => {
         const [youtube, literal, saavn, ...tagSets] = await Promise.all([youtubeJob, literalJob, saavnJob, ...tagJobs]);
         if (cancelled) return;
 
-        // JioSaavn results are merged with the literal tier (they carry direct
-        // metadata + often a pre-resolved stream URL, so they should rank high).
         const literalMerged = [...saavn, ...literal];
         const merged = rankAndDedupeResults(trimmedQuery, youtube, literalMerged, tagSets, pureBrowse)
           .filter((track) => !isHiddenTrack(track, hiddenResults))
           .slice(0, 300);
 
         setCached(SEARCH_CACHE_NAMESPACE, trimmedQuery, merged);
-
         setIndexedResults(merged);
         setSearchHistory(getSongHistory());
       } catch {
@@ -185,7 +183,7 @@ const Search = () => {
       } finally {
         if (!cancelled) setSearching(false);
       }
-    }, 300);
+    }, 250);
 
     return () => {
       cancelled = true;
