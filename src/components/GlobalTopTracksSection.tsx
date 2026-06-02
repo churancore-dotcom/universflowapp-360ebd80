@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Music2, Sparkles } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { usePlayer, Song } from '@/contexts/PlayerContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserArtistPrefs } from '@/lib/userArtistPrefs';
@@ -14,74 +15,62 @@ import { supabase } from '@/integrations/supabase/client';
 const GlobalTopTracksSection = () => {
   const { user } = useAuth();
   const { playSong, currentSong } = usePlayer();
-  const [tracks, setTracks] = useState<IndexedTrack[]>([]);
-  const [loading, setLoading] = useState(true);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
-  const [followedCount, setFollowedCount] = useState<number>(0);
 
-  useEffect(() => {
-    let cancelled = false;
-    if (!user) { setLoading(false); return; }
-    (async () => {
-      const prefs = await getUserArtistPrefs(user.id);
-      if (cancelled) return;
-      setFollowedCount(prefs.length);
-      if (prefs.length === 0) { setLoading(false); return; }
-
+  // Cached across Home revisits — only refetches every 10 min.
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['top30-followed', user?.id ?? 'anon'],
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    queryFn: async () => {
+      const prefs = await getUserArtistPrefs(user!.id);
       const names = prefs.map(p => p.artist_name).filter(Boolean);
+      if (names.length === 0) return { tracks: [] as IndexedTrack[], followedCount: 0 };
 
-      try {
-        // 1) Pull whatever we already have cached in stream_songs (instant)
-        const { data, error } = await supabase
-          .from('stream_songs')
-          .select('track_id, title, artist, album, cover_url, duration')
-          .in('artist', names)
-          .order('last_seen_at', { ascending: false })
-          .limit(30);
-        if (error) throw error;
-        if (cancelled) return;
-        const seen = new Set<string>();
-        const mapped: IndexedTrack[] = [];
-        for (const r of (data || [])) {
-          const key = `${(r.artist || '').toLowerCase()}::${(r.title || '').toLowerCase()}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          mapped.push({
-            id: r.track_id, title: r.title, artist: r.artist,
-            album: r.album ?? undefined, cover_url: r.cover_url ?? undefined,
-            duration: r.duration ?? undefined,
-          });
-        }
-        setTracks(mapped);
+      const { data: rows } = await supabase
+        .from('stream_songs')
+        .select('track_id, title, artist, album, cover_url, duration')
+        .in('artist', names)
+        .order('last_seen_at', { ascending: false })
+        .limit(30);
 
-        // 2) If the cache is thin (< 30), fan out and pull live top tracks per
-        // followed artist via the Piped/Last.fm indexer so the rail always fills.
-        if (mapped.length < 30) {
-          const perArtist = Math.max(2, Math.ceil((30 - mapped.length) / Math.max(1, names.length)));
-          const lists = await Promise.all(
-            names.slice(0, 12).map((n) => getArtistTopTracksByName(n, perArtist).catch(() => [] as IndexedTrack[]))
-          );
-          if (cancelled) return;
-          for (const list of lists) {
-            for (const t of list) {
-              const key = `${(t.artist || '').toLowerCase()}::${(t.title || '').toLowerCase()}`;
-              if (seen.has(key)) continue;
-              seen.add(key);
-              mapped.push(t);
-              if (mapped.length >= 30) break;
-            }
+      const seen = new Set<string>();
+      const mapped: IndexedTrack[] = [];
+      for (const r of (rows || [])) {
+        const key = `${(r.artist || '').toLowerCase()}::${(r.title || '').toLowerCase()}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        mapped.push({
+          id: r.track_id, title: r.title, artist: r.artist,
+          album: r.album ?? undefined, cover_url: r.cover_url ?? undefined,
+          duration: r.duration ?? undefined,
+        });
+      }
+
+      if (mapped.length < 30) {
+        const perArtist = Math.max(2, Math.ceil((30 - mapped.length) / Math.max(1, names.length)));
+        const lists = await Promise.all(
+          names.slice(0, 12).map((n) => getArtistTopTracksByName(n, perArtist).catch(() => [] as IndexedTrack[]))
+        );
+        for (const list of lists) {
+          for (const t of list) {
+            const key = `${(t.artist || '').toLowerCase()}::${(t.title || '').toLowerCase()}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            mapped.push(t);
             if (mapped.length >= 30) break;
           }
-          if (!cancelled) setTracks([...mapped]);
+          if (mapped.length >= 30) break;
         }
-      } catch (e) {
-        console.error('top-30 followed load failed', e);
-      } finally {
-        if (!cancelled) setLoading(false);
       }
-    })();
-    return () => { cancelled = true; };
-  }, [user?.id]);
+
+      return { tracks: mapped, followedCount: prefs.length };
+    },
+  });
+
+  const tracks = data?.tracks ?? [];
+  const followedCount = data?.followedCount ?? 0;
 
   useEffect(() => {
     tracks.slice(0, 8).forEach(t => prefetchIndexedTrack(t.artist, t.title));
