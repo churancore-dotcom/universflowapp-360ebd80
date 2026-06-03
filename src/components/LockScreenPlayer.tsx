@@ -5,13 +5,20 @@ import { usePlayerProgress } from '@/lib/playerProgressStore';
 import { Slider } from '@/components/ui/slider';
 import { setLockscreenOpen } from '@/lib/lockscreenState';
 import { usePremium } from '@/hooks/usePremium';
-import { useLockScreenTheme } from '@/lib/lockScreenTheme';
+import {
+  useLockScreenTheme,
+  setStoredLockScreenTheme,
+  LOCK_SCREEN_THEMES,
+  type LockScreenThemeId,
+} from '@/lib/lockScreenTheme';
 import LockScreenBackground from '@/components/LockScreenBackground';
 import LockScreenArtwork from '@/components/LockScreenArtwork';
+import { toast } from 'sonner';
 import {
   Play, Pause, SkipBack, SkipForward, Music, Volume2, VolumeX,
-  Shuffle, Repeat, Repeat1, Lock
+  Shuffle, Repeat, Repeat1, Lock, MoreHorizontal, Check, Crown
 } from 'lucide-react';
+
 
 const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
@@ -74,8 +81,20 @@ const LockScreenPlayer = ({ isOpen, onClose }: LockScreenPlayerProps) => {
   const themeId = useLockScreenTheme(isPremium);
 
   const [time, setTime] = useState(new Date());
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const dragY = useMotionValue(0);
   const dragOpacity = useTransform(dragY, [-200, 0], [0, 1]);
+
+  const handlePickTheme = (id: LockScreenThemeId, locked: boolean) => {
+    if (locked) {
+      toast.info('Animated lock screens are a Premium perk');
+      setShowThemePicker(false);
+      return;
+    }
+    setStoredLockScreenTheme(id);
+    setShowThemePicker(false);
+  };
+
 
   // Keep screen awake
   useWakeLock(isOpen);
@@ -130,12 +149,15 @@ const LockScreenPlayer = ({ isOpen, onClose }: LockScreenPlayerProps) => {
             {/* Status bar area */}
             <div className="flex items-center justify-between px-6 pt-[env(safe-area-inset-top,12px)] pb-1">
               <Lock className="w-3.5 h-3.5 text-white/40" />
-              <div className="flex items-center gap-1">
-                <div className="w-1 h-1 rounded-full bg-white/40" />
-                <div className="w-1 h-1 rounded-full bg-white/40" />
-                <div className="w-1 h-1 rounded-full bg-white/40" />
-              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowThemePicker(v => !v); }}
+                className="w-9 h-9 -mr-2 flex items-center justify-center rounded-full active:bg-white/10"
+                aria-label="Change lock screen style"
+              >
+                <MoreHorizontal className="w-5 h-5 text-white/70" />
+              </button>
             </div>
+
 
             {/* Clock - iOS style */}
             <motion.div
