@@ -36,6 +36,7 @@ import { SentryErrorBoundary } from "./components/SentryErrorBoundary";
 
 // These are visited less often — keep lazy to keep initial bundle small.
 const PlaylistDetail = lazy(() => import("./pages/PlaylistDetail"));
+const GetApp = lazy(() => import("./pages/GetApp"));
 const ArtistDetail = lazy(() => import("./pages/ArtistDetail"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Support = lazy(() => import("./pages/Support"));
@@ -149,7 +150,8 @@ const AnimatedRoutes = () => {
     <OfflineGate />
     <Suspense fallback={<LazyFallback />}>
         <Routes location={location}>
-          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/" element={<RootGate />} />
+          <Route path="/get" element={<GetApp />} />
           <Route path="/auth" element={
             user ? <Navigate to="/home" replace /> : 
             <Auth />
