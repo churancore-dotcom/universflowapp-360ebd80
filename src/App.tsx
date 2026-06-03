@@ -36,6 +36,7 @@ import { SentryErrorBoundary } from "./components/SentryErrorBoundary";
 
 // These are visited less often — keep lazy to keep initial bundle small.
 const PlaylistDetail = lazy(() => import("./pages/PlaylistDetail"));
+const GetApp = lazy(() => import("./pages/GetApp"));
 const ArtistDetail = lazy(() => import("./pages/ArtistDetail"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Support = lazy(() => import("./pages/Support"));
@@ -140,6 +141,20 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Root entry: logged-in users + native shells go to Home;
+// fresh web visitors see the public Download/landing page so search-engine
+// arrivals know this is an Android app, not just a website.
+const RootGate = () => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <LazyFallback />;
+  const inNativeShell =
+    (typeof window !== 'undefined' &&
+      ((window as any).Capacitor?.isNativePlatform?.() ||
+        /median/i.test(navigator.userAgent || '')));
+  if (user || inNativeShell) return <Home />;
+  return <Navigate to="/get" replace />;
+};
+
 const AnimatedRoutes = () => {
   const location = useLocation();
   const { user, isOffline } = useAuth();
@@ -149,7 +164,8 @@ const AnimatedRoutes = () => {
     <OfflineGate />
     <Suspense fallback={<LazyFallback />}>
         <Routes location={location}>
-          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/" element={<RootGate />} />
+          <Route path="/get" element={<GetApp />} />
           <Route path="/auth" element={
             user ? <Navigate to="/home" replace /> : 
             <Auth />
