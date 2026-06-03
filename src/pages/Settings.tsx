@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Trash2, Info, Headphones, Bell, Palette, ChevronRight, Heart, Crown, Check, MessageSquare, Gauge, RotateCcw, Sliders } from 'lucide-react';
+import { ChevronLeft, Trash2, Info, Headphones, Bell, Palette, ChevronRight, Heart, Crown, Check, MessageSquare, Gauge, RotateCcw, Sliders, Lock } from 'lucide-react';
+import {
+  LOCK_SCREEN_THEMES,
+  getStoredLockScreenTheme,
+  setStoredLockScreenTheme,
+  type LockScreenThemeId,
+} from '@/lib/lockScreenTheme';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '@/components/BottomNav';
 import PageTransition from '@/components/PageTransition';
