@@ -33,10 +33,10 @@ const tagsFor = (s: { genre?: string | null; mood?: string | null; artist?: stri
   [s.genre, s.mood, s.artist].filter(Boolean).map((t) => String(t).toLowerCase().trim());
 
 /**
- * YouTube-style "Start Mix" — picks a seed and instantly plays an endless
- * radio queue in the global player. NO playlists are saved to the database.
+ * Auto Generate — picks a seed, saves a real playlist to the user's library,
+ * and starts playback immediately from the generated queue.
  */
-const AIPlaylistGenerator = memo(({ isOpen, onClose }: AIPlaylistGeneratorProps) => {
+const AIPlaylistGenerator = memo(({ isOpen, onClose, onPlaylistCreated }: AIPlaylistGeneratorProps) => {
   const { user } = useAuth();
   const { isPremium, isLoading: premiumLoading } = usePremium();
   const { playSong } = usePlayer();
@@ -70,7 +70,7 @@ const AIPlaylistGenerator = memo(({ isOpen, onClose }: AIPlaylistGeneratorProps)
         });
       });
 
-      // Fallback: pull popular catalog so Start Mix is ALWAYS usable, even
+      // Fallback: pull popular catalog so Auto Generate is ALWAYS usable, even
       // for brand-new users who haven't played anything yet.
       if (list.length === 0) {
         const { data: top } = await supabase
@@ -103,8 +103,8 @@ const AIPlaylistGenerator = memo(({ isOpen, onClose }: AIPlaylistGeneratorProps)
     return (
       <AnimatePresence>
         <PremiumLockOverlay
-          title="Start Mix"
-          description="Pick a song and we'll instantly play an endless radio mix tuned to your taste. Available with Premium."
+          title="Auto Generate"
+          description="Pick a song and we'll create a saved playlist tuned to your taste. Available with Premium."
           onClose={onClose}
         />
       </AnimatePresence>
@@ -221,12 +221,38 @@ const AIPlaylistGenerator = memo(({ isOpen, onClose }: AIPlaylistGeneratorProps)
         mood: s.mood ?? undefined,
       }) as Song);
 
+      const { data: playlistRow, error: playlistError } = await supabase
+        .from('playlists')
+        .insert({
+          user_id: user.id,
+          title: `Mix: ${seed.title}`,
+          description: `Auto-generated from ${seed.title} by ${seed.artist}`,
+          cover_url: queue[0]?.cover_url ?? null,
+          is_public: false,
+        })
+        .select('id')
+        .single();
+
+      if (playlistError || !playlistRow?.id) throw playlistError ?? new Error('Playlist was not created');
+
+      const { error: songsError } = await supabase.from('playlist_songs').insert(
+        queue.map((song, position) => ({
+          playlist_id: playlistRow.id,
+          song_id: song.id,
+          position,
+          track_source: song.source ?? 'library',
+        })),
+      );
+
+      if (songsError) throw songsError;
+
+      onPlaylistCreated?.();
       playSong(queue[0], null, queue);
-      toast.success(`Mix started · ${queue.length} tracks`);
+      toast.success(`Playlist created · ${queue.length} tracks`);
       onClose();
     } catch (e) {
-      console.error('Mix start failed:', e);
-      toast.error('Could not start mix. Try again.');
+      console.error('Playlist generation failed:', e);
+      toast.error('Could not create playlist. Try again.');
     } finally {
       setIsStarting(false);
     }
@@ -259,8 +285,8 @@ const AIPlaylistGenerator = memo(({ isOpen, onClose }: AIPlaylistGeneratorProps)
                 <Radio className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold">Start Mix</h2>
-                <p className="text-xs text-muted-foreground">Pick a song · we'll play 20 tuned tracks</p>
+                <h2 className="text-lg font-semibold">Auto Generate</h2>
+                <p className="text-xs text-muted-foreground">Pick a song · save 20 tuned tracks</p>
               </div>
             </div>
             <button
@@ -322,11 +348,11 @@ const AIPlaylistGenerator = memo(({ isOpen, onClose }: AIPlaylistGeneratorProps)
               {isStarting ? (
                 <><Loader2 className="w-5 h-5 animate-spin" /><span>Building mix…</span></>
               ) : (
-                <><Play className="w-5 h-5" fill="currentColor" /><span>Start Mix</span></>
+                <><Play className="w-5 h-5" fill="currentColor" /><span>Create Playlist</span></>
               )}
             </button>
             <p className="text-[11px] text-muted-foreground text-center -mt-2">
-              Plays instantly · nothing saved to your library
+              Saves to your library · starts playing instantly
             </p>
           </div>
         </motion.div>

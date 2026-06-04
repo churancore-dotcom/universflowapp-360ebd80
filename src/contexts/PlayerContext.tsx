@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { resolveIndexedTrack, prefetchIndexedTrack } from '@/lib/musicIndexer';
 import { playerProgressStore, usePlayerProgress } from '@/lib/playerProgressStore';
 import { resume as resumeAudioEngine } from '@/lib/audioEngine';
-import { getRuntimePremium } from '@/lib/premiumState';
 import { toast } from 'sonner';
 
 interface YouTubePlayer {
@@ -180,8 +179,6 @@ const buildStreamProxyUrl = (sourceUrl: string) => {
 
 const isEqProcessingEnabled = () => {
   try {
-    // EQ DSP gating reads the server-verified runtime flag, not localStorage.
-    if (!getRuntimePremium()) return false;
     const raw = localStorage.getItem(EQ_SETTINGS_KEY);
     if (!raw) return false;
 
@@ -523,7 +520,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const onEqChanged = () => {
       const a = audioRef.current;
       if (!a || !a.src) return;
-      if (!getRuntimePremium()) return;
       if (!isEqProcessingEnabled()) return;
       // Already going through our edge-function proxy → already CORS-safe.
       if (a.src.includes('/functions/v1/music-indexer?audio=')) return;
@@ -648,7 +644,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       pool.forEach((s) => autoMixSeenRef.current.add(s.id));
 
       if (pool.length > 0) {
-        setQueueState((prev) => [...prev, ...pool]);
+        setQueueState((prev) => {
+          const next = [...prev, ...pool];
+          queueRef.current = next;
+          return next;
+        });
       }
       return pool;
     } catch (e) {
@@ -1635,7 +1635,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const addToQueue = useCallback((song: Song) => {
-    setQueueState(prev => [...prev, song]);
+    setQueueState(prev => {
+      const next = [...prev, song];
+      queueRef.current = next;
+      return next;
+    });
   }, []);
 
   const toggleShuffle = useCallback(() => {
