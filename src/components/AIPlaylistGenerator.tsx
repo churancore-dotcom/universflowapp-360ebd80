@@ -33,10 +33,10 @@ const tagsFor = (s: { genre?: string | null; mood?: string | null; artist?: stri
   [s.genre, s.mood, s.artist].filter(Boolean).map((t) => String(t).toLowerCase().trim());
 
 /**
- * YouTube-style "Start Mix" — picks a seed and instantly plays an endless
- * radio queue in the global player. NO playlists are saved to the database.
+ * Auto Generate — picks a seed, saves a real playlist to the user's library,
+ * and starts playback immediately from the generated queue.
  */
-const AIPlaylistGenerator = memo(({ isOpen, onClose }: AIPlaylistGeneratorProps) => {
+const AIPlaylistGenerator = memo(({ isOpen, onClose, onPlaylistCreated }: AIPlaylistGeneratorProps) => {
   const { user } = useAuth();
   const { isPremium, isLoading: premiumLoading } = usePremium();
   const { playSong } = usePlayer();
@@ -221,8 +221,34 @@ const AIPlaylistGenerator = memo(({ isOpen, onClose }: AIPlaylistGeneratorProps)
         mood: s.mood ?? undefined,
       }) as Song);
 
+      const { data: playlistRow, error: playlistError } = await supabase
+        .from('playlists')
+        .insert({
+          user_id: user.id,
+          title: `Mix: ${seed.title}`,
+          description: `Auto-generated from ${seed.title} by ${seed.artist}`,
+          cover_url: queue[0]?.cover_url ?? null,
+          is_public: false,
+        })
+        .select('id')
+        .single();
+
+      if (playlistError || !playlistRow?.id) throw playlistError ?? new Error('Playlist was not created');
+
+      const { error: songsError } = await supabase.from('playlist_songs').insert(
+        queue.map((song, position) => ({
+          playlist_id: playlistRow.id,
+          song_id: song.id,
+          position,
+          track_source: song.source ?? 'library',
+        })),
+      );
+
+      if (songsError) throw songsError;
+
+      onPlaylistCreated?.();
       playSong(queue[0], null, queue);
-      toast.success(`Mix started · ${queue.length} tracks`);
+      toast.success(`Playlist created · ${queue.length} tracks`);
       onClose();
     } catch (e) {
       console.error('Mix start failed:', e);
