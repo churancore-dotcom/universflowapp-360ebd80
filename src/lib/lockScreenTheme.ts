@@ -7,11 +7,12 @@ import { useEffect, useState } from 'react';
  * no requestAnimationFrame loops, no canvas, no audio reactivity. This keeps
  * battery + CPU flat on mid-range Android while still looking premium.
  *
- * `vinyl` is the new default — free, animated. A square cover with a
- * spinning vinyl disc peeking out behind it (per latest design ref).
+ * `classic` is the default — free, simple, animated background only. It keeps
+ * the original lock-screen feel with NO large centre artwork; the song cover
+ * only drives the blurred/dynamic background.
  */
 
-export type LockScreenThemeId = 'vinyl' | 'classic' | 'aurora' | 'waves';
+export type LockScreenThemeId = 'classic' | 'aurora' | 'waves' | 'glow';
 
 const STORAGE_KEY = 'uf_lock_screen_theme';
 const EVENT = 'uf:lock-theme-change';
@@ -27,21 +28,12 @@ export interface LockScreenThemeMeta {
 
 export const LOCK_SCREEN_THEMES: LockScreenThemeMeta[] = [
   {
-    id: 'vinyl',
-    label: 'Vinyl',
-    description: 'Spinning disc behind the cover.',
-    premium: false,
-    preview:
-      'radial-gradient(circle at 70% 50%, #1a1a1a 0%, #0a0a0a 60%), linear-gradient(135deg, #1e3a8a 0%, #0a0a14 100%)',
-    badge: 'Default',
-  },
-  {
     id: 'classic',
     label: 'Classic',
-    description: 'Calm blurred cover.',
+    description: 'Simple animated cover blur.',
     premium: false,
-    preview: 'linear-gradient(160deg, #3a1a4a 0%, #1a0a2a 100%)',
-    badge: 'Free',
+    preview: 'linear-gradient(160deg, #26344f 0%, #121722 100%)',
+    badge: 'Default',
   },
   {
     id: 'aurora',
@@ -60,17 +52,25 @@ export const LOCK_SCREEN_THEMES: LockScreenThemeMeta[] = [
     preview: 'linear-gradient(180deg, #0a0a1a 0%, #1b1240 50%, #ff2d55 140%)',
     badge: 'Premium',
   },
+  {
+    id: 'glow',
+    label: 'Glow',
+    description: 'Slow breathing light field.',
+    premium: true,
+    preview: 'radial-gradient(circle at 50% 45%, #38bdf8 0%, #1e293b 55%, #020617 100%)',
+    badge: 'Premium',
+  },
 ];
 
 const isValid = (v: unknown): v is LockScreenThemeId =>
-  v === 'vinyl' || v === 'classic' || v === 'aurora' || v === 'waves';
+  v === 'classic' || v === 'aurora' || v === 'waves' || v === 'glow';
 
 export const getStoredLockScreenTheme = (): LockScreenThemeId => {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
-    return isValid(v) ? v : 'vinyl';
+    return isValid(v) ? v : 'classic';
   } catch {
-    return 'vinyl';
+    return 'classic';
   }
 };
 
@@ -100,6 +100,6 @@ export const useLockScreenTheme = (isPremium: boolean): LockScreenThemeId => {
   }, []);
 
   const meta = LOCK_SCREEN_THEMES.find((t) => t.id === id);
-  if (meta?.premium && !isPremium) return 'vinyl';
+  if (meta?.premium && !isPremium) return 'classic';
   return id;
 };
