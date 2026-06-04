@@ -38,18 +38,18 @@ export const LOCK_SCREEN_THEMES: LockScreenThemeMeta[] = [
   {
     id: 'aurora',
     label: 'Aurora',
-    description: 'Drifting rose & violet light.',
+    description: 'Drifting blue-green light.',
     premium: true,
     preview:
-      'radial-gradient(circle at 30% 30%, #ff2d55 0%, transparent 55%), radial-gradient(circle at 70% 70%, #7c3aed 0%, #0a0a1a 70%)',
+      'radial-gradient(circle at 30% 30%, #38bdf8 0%, transparent 55%), radial-gradient(circle at 70% 70%, #10b981 0%, #0a0f1a 70%)',
     badge: 'Premium',
   },
   {
     id: 'waves',
     label: 'Waves',
-    description: 'Soft flowing tide of colour.',
+    description: 'Soft flowing blue tide.',
     premium: true,
-    preview: 'linear-gradient(180deg, #0a0a1a 0%, #1b1240 50%, #ff2d55 140%)',
+    preview: 'linear-gradient(180deg, #0f172a 0%, #164e63 70%, #38bdf8 140%)',
     badge: 'Premium',
   },
   {
@@ -84,8 +84,8 @@ export const setStoredLockScreenTheme = (id: LockScreenThemeId) => {
 };
 
 /**
- * Premium-aware theme hook. Non-premium users always fall back to `vinyl`
- * (new default) when they have a premium theme stored.
+ * Premium-aware theme hook. Non-premium users always fall back to `classic`
+ * when they have a premium theme stored.
  */
 export const useLockScreenTheme = (isPremium: boolean): LockScreenThemeId => {
   const [id, setId] = useState<LockScreenThemeId>(() => getStoredLockScreenTheme());
