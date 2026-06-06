@@ -373,17 +373,20 @@ const ArtistStrip = memo(({ songs }: { songs: Song[] }) => {
 ArtistStrip.displayName = 'ArtistStrip';
 
 const EmptyState = memo(() => (
-  <div className="space-y-5">
-    <motion.section
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="relative min-h-[62dvh] overflow-hidden rounded-[2rem] border border-border/60 bg-card"
-      style={{ boxShadow: '0 30px 80px -38px hsl(var(--primary) / 0.55)' }}
+  <motion.div
+    initial={{ opacity: 0, y: 14 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+    className="space-y-5"
+  >
+    <section
+      className="relative h-[520px] overflow-hidden rounded-[2rem] border border-border/60 bg-card"
+      style={{
+        boxShadow: '0 30px 80px -38px hsl(var(--primary) / 0.55)',
+        background: 'radial-gradient(circle at 50% 0%, hsl(var(--primary) / 0.32), transparent 46%), linear-gradient(180deg, hsl(var(--secondary) / 0.85), hsl(var(--background)))',
+      }}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/0.32),transparent_48%),linear-gradient(180deg,hsl(var(--secondary)/0.85),hsl(var(--background)))]" />
-      <div className="absolute left-1/2 top-[12%] h-[74vw] max-h-72 w-[74vw] max-w-72 -translate-x-1/2 rounded-full border border-primary/20 bg-primary/10 blur-3xl" />
-      <div className="absolute left-1/2 top-[16%] grid w-[78%] max-w-[310px] -translate-x-1/2 grid-cols-2 gap-3 rotate-[-8deg]">
+      <div className="absolute left-1/2 top-8 grid w-[76%] -translate-x-1/2 grid-cols-2 gap-3 rotate-[-7deg]">
         {[0, 1, 2, 3].map((item) => (
           <div
             key={item}
@@ -402,13 +405,13 @@ const EmptyState = memo(() => (
           <TinyBars active />
         </div>
       </div>
-    </motion.section>
+    </section>
     <div className="grid grid-cols-3 gap-3 opacity-55">
       {[0, 1, 2].map((item) => (
         <div key={item} className="aspect-square rounded-3xl border border-border/50 bg-secondary/70" />
       ))}
     </div>
-  </div>
+  </motion.div>
 ));
 EmptyState.displayName = 'EmptyState';
 
