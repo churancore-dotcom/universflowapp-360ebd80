@@ -51,14 +51,15 @@ const AIPlaylistGenerator = memo(({ isOpen, onClose, onPlaylistCreated }: AIPlay
     let cancelled = false;
     setLoadingSeeds(true);
     (async () => {
+      const seen = new Set<string>();
+      const list: SeedRow[] = [];
+
       const { data: rp } = await supabase
         .from('recently_played')
         .select('song_id, played_at, songs(id,title,artist,cover_url,genre,mood,audio_url,duration,album)')
         .eq('user_id', user.id)
         .order('played_at', { ascending: false })
         .limit(40);
-      const seen = new Set<string>();
-      const list: SeedRow[] = [];
       (rp || []).forEach((row: any) => {
         const s = row.songs;
         if (!s || seen.has(s.id)) return;
@@ -70,9 +71,8 @@ const AIPlaylistGenerator = memo(({ isOpen, onClose, onPlaylistCreated }: AIPlay
         });
       });
 
-      // Fallback: pull popular catalog so Auto Generate is ALWAYS usable, even
-      // for brand-new users who haven't played anything yet.
-      if (list.length === 0) {
+      // Fallback A: popular catalog (admin-uploaded songs)
+      if (list.length < 8) {
         const { data: top } = await supabase
           .from('songs')
           .select('id,title,artist,cover_url,genre,mood,audio_url,duration,album,play_count')
@@ -84,6 +84,26 @@ const AIPlaylistGenerator = memo(({ isOpen, onClose, onPlaylistCreated }: AIPlay
           seen.add(s.id);
           list.push({
             id: s.id, title: s.title, artist: s.artist, cover_url: s.cover_url,
+            genre: s.genre, mood: s.mood, audio_url: s.audio_url,
+            duration: s.duration, album: s.album,
+          });
+        });
+      }
+
+      // Fallback B: stream catalog (external indexed songs — the real pool
+      // when the admin catalog is empty).
+      if (list.length < 8) {
+        const { data: streams } = await supabase
+          .from('stream_songs')
+          .select('track_id,title,artist,cover_url,genre,mood,audio_url,duration,album,last_seen_at')
+          .not('audio_url', 'is', null)
+          .order('last_seen_at', { ascending: false })
+          .limit(40);
+        (streams || []).forEach((s: any) => {
+          if (!s.audio_url || seen.has(s.track_id)) return;
+          seen.add(s.track_id);
+          list.push({
+            id: s.track_id, title: s.title, artist: s.artist, cover_url: s.cover_url,
             genre: s.genre, mood: s.mood, audio_url: s.audio_url,
             duration: s.duration, album: s.album,
           });
