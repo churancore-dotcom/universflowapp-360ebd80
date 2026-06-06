@@ -373,13 +373,40 @@ const ArtistStrip = memo(({ songs }: { songs: Song[] }) => {
 ArtistStrip.displayName = 'ArtistStrip';
 
 const EmptyState = memo(() => (
-  <div className="grid min-h-[55dvh] place-items-center px-8 text-center">
-    <div>
-      <div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-[2rem] bg-secondary border border-border">
-        <Music className="h-10 w-10 text-primary" />
+  <div className="space-y-5">
+    <motion.section
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      className="relative min-h-[62dvh] overflow-hidden rounded-[2rem] border border-border/60 bg-card"
+      style={{ boxShadow: '0 30px 80px -38px hsl(var(--primary) / 0.55)' }}
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/0.32),transparent_48%),linear-gradient(180deg,hsl(var(--secondary)/0.85),hsl(var(--background)))]" />
+      <div className="absolute left-1/2 top-[12%] h-[74vw] max-h-72 w-[74vw] max-w-72 -translate-x-1/2 rounded-full border border-primary/20 bg-primary/10 blur-3xl" />
+      <div className="absolute left-1/2 top-[16%] grid w-[78%] max-w-[310px] -translate-x-1/2 grid-cols-2 gap-3 rotate-[-8deg]">
+        {[0, 1, 2, 3].map((item) => (
+          <div
+            key={item}
+            className={`aspect-square rounded-[1.7rem] border border-border/70 bg-secondary/90 grid place-items-center ${item === 1 ? 'translate-y-7' : ''} ${item === 2 ? '-translate-y-2' : ''}`}
+          >
+            <Music className="h-8 w-8 text-primary" />
+          </div>
+        ))}
       </div>
-      <h2 className="text-xl font-black text-foreground">No music yet</h2>
-      <p className="mt-2 text-sm text-muted-foreground">Tracks will appear here once they are added.</p>
+      <div className="absolute inset-x-0 bottom-0 p-6">
+        <h2 className="max-w-[7ch] text-[48px] font-black leading-[0.88] tracking-normal text-foreground">Universflow</h2>
+        <div className="mt-5 flex items-center gap-3">
+          <div className="grid h-16 w-16 place-items-center rounded-full bg-primary text-primary-foreground" style={{ boxShadow: '0 12px 34px hsl(var(--primary) / 0.5)' }}>
+            <Play className="ml-1 h-6 w-6" fill="currentColor" />
+          </div>
+          <TinyBars active />
+        </div>
+      </div>
+    </motion.section>
+    <div className="grid grid-cols-3 gap-3 opacity-55">
+      {[0, 1, 2].map((item) => (
+        <div key={item} className="aspect-square rounded-3xl border border-border/50 bg-secondary/70" />
+      ))}
     </div>
   </div>
 ));
