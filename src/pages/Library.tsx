@@ -86,7 +86,7 @@ const Library = () => {
   const { downloads, removeSong, getDownloadedUrl, totalStorageUsed, clearAllDownloads } = useDownloads();
   const [activeTab, setActiveTab] = useState(isOffline ? 'downloads' : 'liked');
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
-  const [showAIPlaylist, setShowAIPlaylist] = useState(false);
+  
 
   const libraryQueryKey = ['library', user?.id] as const;
   const initialCached = user ? readLibraryCache(user.id) : undefined;
