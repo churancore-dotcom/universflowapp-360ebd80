@@ -290,12 +290,12 @@ const ManageSubscription = () => {
           </section>
 
           {/* Plan details */}
-          <section className="rounded-3xl overflow-hidden bg-card border border-border/60">
-            <div className="px-4 py-3 border-b border-border/60 flex items-center gap-2">
+          <section className="rounded-3xl overflow-hidden bg-card/50 border border-white/5 backdrop-blur-sm">
+            <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
               <Zap className="w-4 h-4 text-primary" />
               <span className="text-sm font-semibold">Plan details</span>
             </div>
-            <div className="divide-y divide-border/60">
+            <div className="divide-y divide-white/5">
               <Row label="Plan" value={planLabel(subscription?.subscription_type)} />
               <Row label="Status" value="Active" valueClass="text-emerald-400" />
               <Row label="Platform" value={(subscription?.platform || 'web').toUpperCase()} />
@@ -311,7 +311,7 @@ const ManageSubscription = () => {
           {/* CTA strip */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-            className="rounded-3xl p-4 flex items-center gap-3 bg-card border border-border/60"
+            className="rounded-3xl p-4 flex items-center gap-3 bg-card/50 border border-white/5 backdrop-blur-sm"
           >
             <div className="w-10 h-10 rounded-3xl flex items-center justify-center bg-primary/15">
               <Gift className="w-5 h-5 text-primary" />
@@ -357,8 +357,8 @@ const PremiumDebugPanel = ({
   errorMessage: string | null;
   onRefresh: () => Promise<void>;
 }) => (
-  <section className="rounded-3xl overflow-hidden bg-card border border-border/60 text-left">
-    <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between gap-3">
+  <section className="rounded-3xl overflow-hidden bg-card/50 border border-white/5 backdrop-blur-sm text-left">
+    <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between gap-3">
       <div className="min-w-0">
         <p className="text-sm font-semibold">Premium status debug</p>
         <p className="text-[11px] text-muted-foreground">Live server verification details</p>
@@ -370,7 +370,7 @@ const PremiumDebugPanel = ({
         Refresh
       </button>
     </div>
-    <div className="divide-y divide-border/60">
+    <div className="divide-y divide-white/5">
       <Row label="Verified status" value={verifiedStatus ? 'Premium verified' : 'Not verified'} valueClass={verifiedStatus ? 'text-emerald-400' : 'text-amber-400'} />
       <Row label="Last realtime update" value={formatDebugTime(lastRealtimeUpdate)} />
       <Row label="Last server check" value={formatDebugTime(lastCheckedAt)} />

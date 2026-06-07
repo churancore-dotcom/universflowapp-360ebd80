@@ -195,8 +195,8 @@ const Settings = () => {
             <div className="flex items-center gap-2 mb-2.5 px-1">
               <h2 className="text-[10px] font-extrabold text-white/40 uppercase tracking-[0.2em]">Playback</h2>
             </div>
-            <div className="rounded-3xl overflow-hidden bg-card border border-border/50">
-              <div className="px-4 py-3 border-b border-border/50">
+            <div className="rounded-3xl overflow-hidden bg-card/50 border border-white/5 backdrop-blur-sm">
+              <div className="px-4 py-3 border-b border-white/5">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">Crossfade</span>
@@ -212,17 +212,17 @@ const Settings = () => {
                   <Slider value={[cfDuration]} onValueChange={([val]) => setCrossfadeDuration(val)} max={12} step={1} className="[&_[role=slider]]:w-5 [&_[role=slider]]:h-5" />
                 )}
               </div>
-              <div className="px-4 py-3 flex items-center justify-between border-b border-border/50">
+              <div className="px-4 py-3 flex items-center justify-between border-b border-white/5">
                 <span className="text-sm">Gapless Playback</span>
                 <Switch checked={gaplessPlayback} onCheckedChange={handleGapless} className="data-[state=checked]:bg-primary scale-90" />
               </div>
-              <div className="px-4 py-3 flex items-center justify-between border-b border-border/50">
+              <div className="px-4 py-3 flex items-center justify-between border-b border-white/5">
                 <span className="text-sm">Autoplay</span>
                 <Switch checked={autoplay} onCheckedChange={handleAutoplay} className="data-[state=checked]:bg-primary scale-90" />
               </div>
 
               {/* Playback speed */}
-              <div className="px-4 py-3 border-b border-border/50">
+              <div className="px-4 py-3 border-b border-white/5">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Gauge className="w-4 h-4 text-primary" />
@@ -250,7 +250,7 @@ const Settings = () => {
               {/* Equalizer shortcut */}
               <button
                 onClick={() => setShowEq(true)}
-                className="w-full px-4 py-3 flex items-center justify-between border-b border-border/50 active:bg-muted/30"
+                className="w-full px-4 py-3 flex items-center justify-between border-b border-white/5 active:bg-muted/30"
               >
                 <div className="flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-primary" />
@@ -279,8 +279,8 @@ const Settings = () => {
             <div className="flex items-center gap-2 mb-2.5 px-1">
               <h2 className="text-[10px] font-extrabold text-white/40 uppercase tracking-[0.2em]">Support</h2>
             </div>
-            <div className="rounded-3xl overflow-hidden bg-card border border-border/50">
-              <button onClick={() => navigate(isPremium ? '/subscription' : '/premium')} className="w-full px-4 py-3 flex items-center justify-between border-b border-border/50 active:bg-muted/30">
+            <div className="rounded-3xl overflow-hidden bg-card/50 border border-white/5 backdrop-blur-sm">
+              <button onClick={() => navigate(isPremium ? '/subscription' : '/premium')} className="w-full px-4 py-3 flex items-center justify-between border-b border-white/5 active:bg-muted/30">
                 <div className="flex items-center gap-2">
                   {isPremium && <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-[10px] font-medium text-primary">Premium</span>}
                   <span className="text-sm">{isPremium ? 'Manage Subscription' : 'Upgrade to Premium'}</span>
@@ -305,8 +305,8 @@ const Settings = () => {
             <div className="flex items-center gap-2 mb-2.5 px-1">
               <h2 className="text-[10px] font-extrabold text-white/40 uppercase tracking-[0.2em]">Notifications</h2>
             </div>
-            <div className="rounded-3xl overflow-hidden bg-card border border-border/50">
-              <div className="px-4 py-3 flex items-center justify-between border-b border-border/50">
+            <div className="rounded-3xl overflow-hidden bg-card/50 border border-white/5 backdrop-blur-sm">
+              <div className="px-4 py-3 flex items-center justify-between border-b border-white/5">
                 <span className="text-sm">Push Notifications</span>
                 <Switch checked={notifications} onCheckedChange={handleNotifications} className="data-[state=checked]:bg-primary scale-90" />
               </div>
@@ -322,7 +322,7 @@ const Settings = () => {
             <div className="flex items-center gap-2 mb-2.5 px-1">
               <h2 className="text-[10px] font-extrabold text-white/40 uppercase tracking-[0.2em]">Appearance</h2>
             </div>
-            <div className="rounded-3xl overflow-hidden bg-card border border-border/50">
+            <div className="rounded-3xl overflow-hidden bg-card/50 border border-white/5 backdrop-blur-sm">
               <div className="px-4 py-3">
                 <span className="text-sm mb-3 block">Theme</span>
                 <div className="grid grid-cols-3 gap-3">
@@ -364,7 +364,7 @@ const Settings = () => {
             <div className="flex items-center gap-2 mb-2.5 px-1">
               <h2 className="text-[10px] font-extrabold text-white/40 uppercase tracking-[0.2em]">Storage</h2>
             </div>
-            <div className="rounded-3xl overflow-hidden bg-card border border-border/50">
+            <div className="rounded-3xl overflow-hidden bg-card/50 border border-white/5 backdrop-blur-sm">
               <button onClick={handleClearCache} className="w-full px-4 py-3 flex items-center justify-between text-destructive active:bg-destructive/10">
                 <span className="text-sm font-medium">Clear Cache</span>
                 <span className="text-sm text-muted-foreground">{cacheSize}</span>
@@ -377,8 +377,8 @@ const Settings = () => {
             <div className="flex items-center gap-2 mb-2.5 px-1">
               <h2 className="text-[10px] font-extrabold text-white/40 uppercase tracking-[0.2em]">About</h2>
             </div>
-            <div className="rounded-3xl overflow-hidden bg-card border border-border/50">
-              <div className="px-4 py-3 flex items-center justify-between border-b border-border/50">
+            <div className="rounded-3xl overflow-hidden bg-card/50 border border-white/5 backdrop-blur-sm">
+              <div className="px-4 py-3 flex items-center justify-between border-b border-white/5">
                 <span className="text-sm">Version</span>
                 <span className="text-sm text-muted-foreground">1.0.0</span>
               </div>
