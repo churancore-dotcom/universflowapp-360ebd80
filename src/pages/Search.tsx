@@ -438,14 +438,30 @@ const Search = () => {
           {searching ? <SearchSkeleton /> : (
             <>
               {/* Indexed stream results */}
-              {visibleIndexedResults.length > 0 && (
+              {artistResults.length > 0 && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-5">
+                  <h2 className="text-sm font-bold mb-3">Artists · {artistResults.length} results</h2>
+                  <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
+                    {artistResults.map((artist) => (
+                      <button key={artist.name} type="button" onClick={() => navigate(`/artists?focus=${encodeURIComponent(artist.name)}`)} className="w-24 flex-shrink-0 text-center active:scale-[0.96] transition-transform">
+                        <div className="w-20 h-20 mx-auto mb-2 rounded-full overflow-hidden bg-card border border-white/10">
+                          {artist.image_url && <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" loading="lazy" referrerPolicy="no-referrer" />}
+                        </div>
+                        <p className="text-[12px] font-bold text-foreground truncate">{artist.name}</p>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {displayedIndexedResults.length > 0 && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={libraryResults.length > 0 ? 'mt-6' : ''}>
                   <h2 className="text-sm font-bold mb-3 flex items-center gap-1.5">
                     <Radio className="w-4 h-4 text-primary" />
-                    Worldwide Songs · {visibleIndexedResults.length} results
+                    Worldwide Songs · {displayedIndexedResults.length} results
                   </h2>
                   <div className="space-y-1">
-                    {visibleIndexedResults.map((track, i) => {
+                    {displayedIndexedResults.map((track, i) => {
                       const isActive = currentSong?.id === track.id;
                       const isResolving = resolvingId === track.id;
                       return (
@@ -507,7 +523,7 @@ const Search = () => {
               )}
 
               {/* No results */}
-              {query.length > 1 && !searching && libraryResults.length === 0 && visibleIndexedResults.length === 0 && (
+              {query.length > 1 && !searching && libraryResults.length === 0 && displayedIndexedResults.length === 0 && artistResults.length === 0 && (
                 <div className="text-center py-8">
                   <div className="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.06)' }}>
