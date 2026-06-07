@@ -122,7 +122,8 @@ const CountryViralSection = memo(function CountryViralSection() {
         filler = merged;
       }
 
-      return [...pinned, ...filler];
+      // Only show tracks with real cover art — drop placeholder-icon entries.
+      return [...pinned, ...filler].filter((t) => !!t.cover_url);
     },
   });
 
