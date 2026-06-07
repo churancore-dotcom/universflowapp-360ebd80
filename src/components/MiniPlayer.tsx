@@ -288,9 +288,9 @@ const MiniPlayer = memo(function MiniPlayer() {
                     transition={{ duration: 0.1 }}
                   >
                     {isPlaying ? (
-                      <Pause className="w-6 h-6 text-white" fill="white" />
+                      <Pause className="w-6 h-6 text-black" fill="black" />
                     ) : (
-                      <Play className="w-6 h-6 text-white ml-0.5" fill="white" />
+                      <Play className="w-6 h-6 text-black ml-0.5" fill="black" />
                     )}
                   </motion.div>
                 </AnimatePresence>
@@ -303,7 +303,7 @@ const MiniPlayer = memo(function MiniPlayer() {
                 whileTap={{ scale: 0.85, x: 3 }}
                 transition={{ type: "spring", stiffness: 500, damping: 20 }}
               >
-                <SkipForward className="w-5 h-5 text-white" fill="white" />
+                <SkipForward className="w-5 h-5 text-black" fill="black" />
               </motion.button>
 
               <motion.button
@@ -313,7 +313,7 @@ const MiniPlayer = memo(function MiniPlayer() {
                 whileTap={{ scale: 0.85 }}
                 transition={{ type: "spring", stiffness: 500, damping: 20 }}
               >
-                <X className="w-5 h-5 text-white/50" />
+                <X className="w-5 h-5 text-black/50" />
               </motion.button>
             </div>
           </div>
