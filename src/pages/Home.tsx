@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDownloads } from '@/contexts/DownloadContext';
 
 import AllSongsSection from '@/components/AllSongsSection';
+import HomeBento from '@/components/HomeBento';
 
 import GlobalTopTracksSection from '@/components/GlobalTopTracksSection';
 import FeaturedArtistsSection from '@/components/FeaturedArtistsSection';
