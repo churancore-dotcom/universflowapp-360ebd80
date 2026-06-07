@@ -191,7 +191,7 @@ const ManageSubscription = () => {
                   <Crown className="w-3.5 h-3.5 text-white" />
                   <span className="text-[10px] font-bold tracking-wider text-white uppercase">Premium</span>
                 </div>
-                <h2 className="text-2xl font-bold text-white drop-shadow">
+                <h2 className="text-3xl text-white drop-shadow uf-display-title">
                   {planLabel(subscription?.subscription_type)}
                 </h2>
                 <p className="text-sm text-white/85 mt-1">
