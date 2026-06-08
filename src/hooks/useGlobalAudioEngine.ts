@@ -80,7 +80,7 @@ export function useGlobalAudioEngine(audioElement: HTMLAudioElement | null) {
     };
 
     // User toggled EQ in modal — apply right now.
-    const onEqChanged = () => reapply(90);
+    const onEqChanged = () => reapply(180);
 
     doReapply();
     audioElement.addEventListener('loadstart', onMediaReady);
@@ -91,6 +91,7 @@ export function useGlobalAudioEngine(audioElement: HTMLAudioElement | null) {
     document.addEventListener('pointerdown', onPointer, { once: true });
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('uf-eq-changed', onEqChanged);
+    window.addEventListener('uf-eq-source-ready', onEqChanged);
 
     return () => {
       if (reapplyTimer != null) clearTimeout(reapplyTimer);
@@ -102,6 +103,7 @@ export function useGlobalAudioEngine(audioElement: HTMLAudioElement | null) {
       document.removeEventListener('pointerdown', onPointer);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('uf-eq-changed', onEqChanged);
+      window.removeEventListener('uf-eq-source-ready', onEqChanged);
     };
   }, [audioElement]);
 }
