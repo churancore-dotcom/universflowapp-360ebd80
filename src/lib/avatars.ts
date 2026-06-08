@@ -16,16 +16,16 @@ export interface PresetAvatar {
 }
 
 export const PRESET_AVATARS: PresetAvatar[] = [
-  { id: 'rose-mask', url: a1, name: 'Rose Mask' },
-  { id: 'cosmonaut', url: a2, name: 'Cosmonaut' },
-  { id: 'pink-fox', url: a3, name: 'Pink Fox' },
-  { id: 'holo-bubble', url: a4, name: 'Holo Bubble' },
-  { id: 'neon-samurai', url: a5, name: 'Neon Samurai' },
-  { id: 'chrome-wolf', url: a6, name: 'Chrome Wolf' },
-  { id: 'beats-panda', url: a7, name: 'Beats Panda' },
-  { id: 'gem-geode', url: a8, name: 'Gem Geode' },
-  { id: 'dj-cat', url: a9, name: 'DJ Cat' },
-  { id: 'phoenix', url: a10, name: 'Phoenix' },
+  { id: 'hoodie-guy', url: a1, name: 'Hoodie' },
+  { id: 'sweater-girl', url: a2, name: 'Wavy' },
+  { id: 'glasses-beard', url: a3, name: 'Specs' },
+  { id: 'leather-bob', url: a4, name: 'Rockstar' },
+  { id: 'chain-guy', url: a5, name: 'Chain' },
+  { id: 'pink-sweater', url: a6, name: 'Sundown' },
+  { id: 'white-hoodie', url: a7, name: 'Crisp' },
+  { id: 'afro-yellow', url: a8, name: 'Sunny' },
+  { id: 'headphones-boy', url: a9, name: 'Beats' },
+  { id: 'pink-beanie', url: a10, name: 'Cozy' },
 ];
 
 export const resolveAvatar = (url: string | null | undefined): string | null => {
