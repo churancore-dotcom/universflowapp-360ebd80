@@ -32,6 +32,10 @@ const writeEq = (patch: Record<string, unknown>) => {
   } catch { /* ignore */ }
 };
 
+type CapacitorWindow = Window & typeof globalThis & {
+  Capacitor?: { isNativePlatform?: () => boolean };
+};
+
 const Settings = () => {
   const navigate = useNavigate();
   const { isPremium } = usePremium();
@@ -86,8 +90,8 @@ const Settings = () => {
     setNotifications(val);
     localStorage.setItem('uf_notifications', String(val));
     if (!val) return;
-    const isNative = typeof (window as any).Capacitor !== 'undefined'
-      && (window as any).Capacitor.isNativePlatform?.() === true;
+    const capacitor = (window as CapacitorWindow).Capacitor;
+    const isNative = typeof capacitor !== 'undefined' && capacitor.isNativePlatform?.() === true;
     if (isNative) {
       const { requestPushPermissionAndRegister } = await import('@/hooks/usePushRegistration');
       const result = await requestPushPermissionAndRegister();
