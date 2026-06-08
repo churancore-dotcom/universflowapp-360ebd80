@@ -1060,7 +1060,7 @@ const MetadataCard = ({ metadata, setMetadata, genres, moods, isUploading, uploa
     {/* Section Placement */}
     <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 space-y-3">
       <Label className="text-sm font-semibold flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-primary" />
+        <ListChecks className="w-4 h-4 text-primary" />
         Display Sections
       </Label>
       <p className="text-xs text-muted-foreground">Choose where this song should appear</p>
