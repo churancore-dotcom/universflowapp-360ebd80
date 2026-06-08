@@ -491,15 +491,9 @@ export function setBands(gainsDb: number[], bassBoostPercent = 0) {
 
 /** 0..100 wet mix. Capped at 35% wet so vocals stay intelligible. */
 export function setReverb(percent: number) {
-  if (engine.mode !== 'processed' || !engine.ctx || !engine.dryGain || !engine.wetGain) return;
-  const ctx = engine.ctx;
-  const now = ctx.currentTime;
-  const wet = Math.max(0, Math.min(0.35, percent / 100 * 0.45));
-  const dry = 1 - wet * 0.4;
-  engine.dryGain.gain.cancelScheduledValues(now);
-  engine.wetGain.gain.cancelScheduledValues(now);
-  engine.dryGain.gain.setTargetAtTime(dry, now, SMOOTH);
-  engine.wetGain.gain.setTargetAtTime(wet, now, SMOOTH);
+  currentReverbPercent = Math.max(0, Math.min(100, percent));
+  if (currentSpaceId !== 'off') return;
+  applyReverbMix(currentReverbPercent);
 }
 
 function startSpatialLfo() {
@@ -524,7 +518,7 @@ function startSpatialLfo() {
   engine.panLfoGain = lfoGain;
 
   // Add a touch of reverb for the "room" cue
-  if (engine.dryGain && engine.wetGain) {
+  if (currentSpaceId === 'off' && engine.dryGain && engine.wetGain) {
     const now = ctx.currentTime;
     engine.wetGain.gain.cancelScheduledValues(now);
     engine.dryGain.gain.cancelScheduledValues(now);
@@ -548,6 +542,7 @@ function stopSpatialLfo() {
     engine.stereoPanner.pan.cancelScheduledValues(now);
     engine.stereoPanner.pan.setTargetAtTime(0, now, SMOOTH);
   }
+  if (currentSpaceId === 'off') applyReverbMix(currentReverbPercent);
 }
 
 /** Toggle 8D auto-rotating spatial mode. Single boolean — no extra knobs. */
