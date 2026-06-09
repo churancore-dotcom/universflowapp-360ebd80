@@ -289,12 +289,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setIsAdmin(false);
+      setEmailVerified(null);
     }
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user, session, isAdmin, isLoading, isOffline, signIn, signUp, signOut }}
+      value={{ user, session, isAdmin, emailVerified, isLoading, isOffline, signIn, signUp, signOut, refreshEmailVerified }}
     >
       {children}
     </AuthContext.Provider>
