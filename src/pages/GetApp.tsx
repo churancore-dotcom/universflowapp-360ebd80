@@ -217,31 +217,7 @@ const GetApp = () => {
           </div>
         </section>
 
-        {/* Ratings & reviews */}
-        <section className="px-5 pb-6">
-          <h2 className="text-base font-bold mb-3">Ratings &amp; reviews</h2>
-          <div className="flex gap-5 items-center">
-            <div className="text-center">
-              <div className="text-4xl font-extrabold">4.8</div>
-              <div className="flex items-center gap-0.5 justify-center mt-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="w-3 h-3 text-[#FF2D55] fill-[#FF2D55]" />
-                ))}
-              </div>
-              <div className="text-[10px] text-white/55 mt-1">1,280</div>
-            </div>
-            <div className="flex-1 space-y-1.5">
-              {RATING_BARS.map((b) => (
-                <div key={b.stars} className="flex items-center gap-2">
-                  <span className="text-[10px] text-white/55 w-2">{b.stars}</span>
-                  <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                    <div className="h-full bg-[#FF2D55]" style={{ width: `${b.pct}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Ratings & reviews — disabled until real user reviews are collected */}
 
         {/* What's new */}
         <section className="px-5 pb-8">
