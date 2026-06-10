@@ -52,7 +52,7 @@ const ReviewsSheet = ({ isOpen, onClose, onWriteReview }: Props) => {
       .select('id, rating, comment, display_name, created_at')
       .order('created_at', { ascending: false })
       .limit(100);
-    const list = (revs as Review[]) || [];
+    const list = (revs as unknown as Review[]) || [];
     setReviews(list);
 
     if (user) {
