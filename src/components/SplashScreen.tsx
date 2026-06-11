@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import appLogo from '@/assets/app-logo.png';
 import splashVideo from '@/assets/splash.mp4.asset.json';
+import { cdnAssetUrl } from '@/lib/assetUrl';
 
 interface SplashScreenProps {
   onComplete: () => void;
