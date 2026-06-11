@@ -65,7 +65,7 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
       {!videoFailed && (
         <video
           ref={videoRef}
-          src={splashVideo.url}
+          src={cdnAssetUrl(splashVideo.url)}
           autoPlay
           muted
           playsInline
