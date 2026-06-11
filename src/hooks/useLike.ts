@@ -17,6 +17,18 @@ let likeCacheLoaded = false;
 let likeCacheUserId: string | null = null;
 let likeCachePromise: Promise<void> | null = null;
 
+// Subscribers — every mounted useLike hook registers here so a like toggle on
+// one card instantly re-renders every other LikeButton + Library list for the
+// same songId, without waiting for a Supabase round-trip or query refetch.
+const likeSubscribers = new Set<() => void>();
+const notifyLikeSubscribers = () => {
+  for (const cb of likeSubscribers) {
+    try { cb(); } catch { /* ignore */ }
+  }
+  // Also let Library / Profile invalidate their react-query cache
+  try { window.dispatchEvent(new Event('uf:likes-changed')); } catch { /* ignore */ }
+};
+
 const STREAM_LIKES_KEY = 'uf_stream_likes';
 
 const getStreamLikes = (): Set<string> => {
