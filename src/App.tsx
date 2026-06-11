@@ -217,6 +217,7 @@ const AnimatedRoutes = () => {
             <Route path="announcements" element={<Announcements />} />
             <Route path="moderation" element={<ContentModeration />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="insights" element={<LiveInsights />} />
             <Route path="logs" element={<ActivityLogs />} />
             <Route path="bulk" element={<BulkActions />} />
             <Route path="health" element={<SystemHealth />} />
