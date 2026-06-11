@@ -99,6 +99,8 @@ const GetApp = () => {
               alt="Universflow app icon"
               width={88}
               height={88}
+              decoding="async"
+              {...({ fetchpriority: "high" } as any)}
               className="rounded-3xl shadow-xl shadow-[#FF2D55]/30 shrink-0"
             />
             <div className="min-w-0 flex-1">
