@@ -131,14 +131,37 @@ const configureAudioElementSource = (audio: HTMLAudioElement, sourceUrl: string)
   audio.src = sourceUrl;
 };
 
-// Hosts that already deliver proper CORS headers — safe to play & EQ-process directly.
-// Keep this list MINIMAL: anything not here gets proxied through our edge function
-// so the EQ / Web Audio graph can process it without tainting the audio.
+// Hosts we should keep raw for normal playback. When EQ is active we still
+// proxy remote HTTP streams below because WebAudio processing needs a CORS-
+// clean response, and some hosts advertise CORS inconsistently on media ranges.
 const DIRECT_PLAYABLE_HOST_SNIPPETS = [
   'supabase.co',
   'the-standard.io',
   'private.coffee',
   'saavncdn.com',
+];
+
+const EQ_PROXYABLE_HOST_SUFFIXES = [
+  'googlevideo.com',
+  'youtube.com',
+  'youtu.be',
+  'piped.video',
+  'piped.privacydev.net',
+  'piped.kavin.rocks',
+  'kavin.rocks',
+  'piped.tokhmi.xyz',
+  'piped.adminforge.de',
+  'projectsegfau.lt',
+  'invidious.io',
+  'invidious.privacydev.net',
+  'invidious.fdn.fr',
+  'invidious.projectsegfau.lt',
+  'invidious.protokolla.fi',
+  'protokolla.fi',
+  'invidious.f5.si',
+  'f5.si',
+  'thepixora.com',
+  'yewtu.be',
 ];
 
 const shouldProxyStreamUrl = (sourceUrl: string) => {
@@ -149,11 +172,11 @@ const shouldProxyStreamUrl = (sourceUrl: string) => {
     if (parsed.origin === window.location.origin) return false;
     if (sourceUrl.includes('/functions/v1/music-indexer?audio=')) return false;
 
-    // Proxy any non-catalog stream so the Web Audio EQ chain can always
-    // process it (CORS-safe). This unconditionally routes through our
-    // edge function — the user explicitly chose reliability of EQ over
-    // background-throttling risk.
-    return !DIRECT_PLAYABLE_HOST_SNIPPETS.some((host) => parsed.hostname.endsWith(host));
+    if (DIRECT_PLAYABLE_HOST_SNIPPETS.some((host) => parsed.hostname.endsWith(host))) return false;
+
+    // Proxy only hosts our backend audio proxy explicitly allows. Unknown hosts
+    // stay raw, so playback never breaks just because EQ was toggled on.
+    return isEqProcessingEnabled() && EQ_PROXYABLE_HOST_SUFFIXES.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
   } catch {
     return false;
   }
@@ -490,36 +513,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Wire the global EQ/audio engine to the live audio element. Persists across modal open/close.
   useGlobalAudioEngine(audioElement);
-
-  // When EQ effects become active mid-playback on a non-CORS stream, the audio
-  // graph cannot process the current src (it was loaded direct for background
-  // reliability). Re-load the same source through our proxy so the WebAudio
-  // chain can actually connect — this is what makes the EQ modal flip from
-  // "Connecting…" to "Connected" without the user touching the song.
-  useEffect(() => {
-    const handler = () => {
-      const audio = audioRef.current;
-      if (!audio) return;
-      if (!isEqActive(getEQSettings())) return;
-      const src = audio.currentSrc || audio.src;
-      if (!src || isAudioProxyUrl(src)) return;
-      if (!shouldProxyStreamUrl(src)) return;
-      const proxied = buildStreamProxyUrl(src);
-      if (proxied === src) return;
-      const wasPlaying = !audio.paused;
-      const t = audio.currentTime;
-      configureAudioElementSource(audio, proxied);
-      audio.load();
-      const onLoaded = () => {
-        try { audio.currentTime = t; } catch { /* ignore */ }
-        if (wasPlaying) audio.play().catch(() => {});
-        audio.removeEventListener('loadedmetadata', onLoaded);
-      };
-      audio.addEventListener('loadedmetadata', onLoaded);
-    };
-    window.addEventListener('uf-eq-changed', handler);
-    return () => window.removeEventListener('uf-eq-changed', handler);
-  }, []);
 
   const publishNativeMusicControls = useCallback((song: Song, playing: boolean, duration?: number) => {
     import('@/lib/nativeMusicControls')
