@@ -112,7 +112,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading, emailVerified } = useAuth();
   if (isLoading) return <LazyFallback />;
   if (!user) return <Navigate to="/auth" replace />;
-  // Strict gate: only block when we explicitly know the email is unverified.
+  // Wait for the profile check to finish before rendering anything. Without
+  // this, the user sees Home flash for a second on login and then gets bounced
+  // to the verification screen because emailVerified is briefly null.
+  if (emailVerified === null) return <LazyFallback />;
   if (emailVerified === false) return <Navigate to="/check-email" replace />;
   return <>{children}</>;
 };
