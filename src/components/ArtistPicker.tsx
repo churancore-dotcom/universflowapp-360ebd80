@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Disc3, Search as SearchIcon, Loader2 } from 'lucide-react';
+import { Check, Disc3, Search as SearchIcon, Loader2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { triggerHaptic } from '@/hooks/useHaptics';
 import { toast } from 'sonner';
 import { CURATED_ARTISTS } from '@/lib/curatedArtists';
-import { enrichArtistImages, getTopArtistsByTag } from '@/lib/musicIndexer';
+import { enrichArtistImages, getTopArtistsByTag, searchArtistDirectory } from '@/lib/musicIndexer';
+
 
 interface ArtistOption {
   name: string;
