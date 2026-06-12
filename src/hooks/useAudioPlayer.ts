@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { audioEngine } from '../services/AudioEngine';
+import { audioEngine, ensureNativeBridge } from '../services/AudioEngine';
 import { preloadBuffer } from '../services/AudioBufferLoader';
 import { setupMediaSession, setMediaSessionState } from '../services/MediaSessionManager';
 
